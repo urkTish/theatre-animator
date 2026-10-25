@@ -357,10 +357,10 @@ if IN_BLENDER:
     FIGURES = {
         "Standing actor": dict(macro=dict(gender=1.0, age=0.62, muscle=0.55, weight=0.5, height=0.5, proportions=0.7),
                                race=dict(caucasian=0.85, african=0.1, asian=0.05), skin="middleage_caucasian_male",
-                               tan=(0.42, 0.26, 0.15), hair="bob01", eyes=False, hair_col=(0.035, 0.028, 0.022)),
+                               tan=(0.42, 0.26, 0.15), hair="long01", eyes=False, hair_col=(0.55, 0.52, 0.5)),
         "Reclining actor": dict(macro=dict(gender=0.9, age=0.45, muscle=0.42, weight=0.45, height=0.52, proportions=0.75),
                                 race=dict(caucasian=0.9, african=0.05, asian=0.05), skin="young_caucasian_male",
-                                tan=(0.46, 0.30, 0.18), hair="long01", eyes=False, hair_col=(0.075, 0.048, 0.03)),
+                                tan=(0.46, 0.30, 0.18), hair="long01", eyes=False, hair_col=(1.0, 0.8, 0.62)),
         "Stagehand A": dict(macro=dict(gender=1.0, age=0.45, muscle=0.7, weight=0.45, height=0.38, proportions=0.5),
                             race=dict(caucasian=0.75, african=0.2, asian=0.05), skin="young_caucasian_male",
                             tan=(0.36, 0.21, 0.12), hair="short02", eyes=True, brows="eyebrow001"),
@@ -452,8 +452,8 @@ if IN_BLENDER:
                 folder = next((d for d in ("hair", "eyebrows", "eyelashes") if os.path.exists(os.path.join(ud, d, src, src + ".mhmat"))), None)
                 if folder:
                     tex = mhmat_texture(os.path.join(ud, folder, src, src + ".mhmat"))
-                    col = spec.get("hair_col", (0.05, 0.035, 0.025))
-                    set_only_material(a, mat_textured(name + " " + src, tex, tint=col, tint_fac=1.0, rough=0.55, alpha=True, spec=0.3))
+                    col = spec.get("hair_col", (0.5, 0.42, 0.36))
+                    set_only_material(a, mat_textured(name + " " + src, tex, tint=col, tint_fac=1.0, rough=0.42, alpha=True, spec=0.5))
 
     def make_human(name, spec):
         HS, LS, TS, RS = mpfb()
@@ -920,7 +920,7 @@ if IN_BLENDER:
     GARMENTS = {
         # figure: (garment name, material, half-width (sleeve reach) m, hem height m, cloth params)
         "Standing actor": ("chiton", "Chiton undyed wool", 0.44, 0.035, dict(mass=0.22, bend=0.35, tension=14.0)),
-        "Reclining actor": ("chiton", "Chiton saffron", 0.36, 0.05, dict(mass=0.22, bend=0.35, tension=14.0)),
+        "Reclining actor": ("chiton", "Chiton saffron", 0.30, 0.05, dict(mass=0.22, bend=0.35, tension=14.0)),
         "Stagehand A": ("tunic", "Stagehand tunic (dark wool)", 0.25, 0.50, dict(mass=0.3, bend=1.5, tension=18.0)),
         "Stagehand B": ("tunic", "Stagehand tunic (dark wool)", 0.25, 0.49, dict(mass=0.3, bend=1.5, tension=18.0)),
     }
@@ -966,7 +966,8 @@ if IN_BLENDER:
             rig.data.pose_position = "REST"
             bpy.context.view_layer.update()
             store_rest_coords(body)
-            g, info = make_garment(f"{name} {gname}", rig, body, mat, xw, hem)
+            g, info = make_garment(f"{name} {gname}", rig, body, mat, xw, hem,
+                                   neck_hw=0.07 if gname == "tunic" else 0.075, margin=0.04 if gname == "tunic" else 0.055)
             fig["garment"], fig["ginfo"] = g, info
             rig.data.pose_position = "POSE"
             transition_keys(name, fig)
@@ -1029,7 +1030,7 @@ if IN_BLENDER:
         return dict(eL=eL.copy(), eR=eR.copy(), ez=0.5 * (eL.z + eR.z), ey=0.5 * (eL.y + eR.y),
                     hz=rb["head"].head_local.z)
 
-    def build_mask(name, fig, paint, hair_col, scale=1.11, beard=False):
+    def build_mask(name, fig, paint, hair_col, scale=1.16, beard=False, trim_wig=False):
         """fig['body'] must already be frozen in the final pose (it carries 'rest_co')"""
         body, rig, P = fig["body"], fig["rig"], fig["poser"]
         H = head_refs(rig)
@@ -1043,7 +1044,7 @@ if IN_BLENDER:
         hc = Mh.translation + (Mh.to_3x3().normalized() @ V((0, 1, 0))) * 0.045
 
         def in_face(p):
-            return (p.x / 0.086) ** 2 + ((p.z - (ez - 0.012)) / 0.124) ** 2 < 1.0 and p.y < ey + 0.072
+            return (p.x / 0.088) ** 2 + ((p.z - (ez - 0.008)) / 0.132) ** 2 < 1.0 and p.y < ey + 0.075
 
         def eye_hole(p):
             return any(((p.x - sx * ex) / 0.0165) ** 2 + ((p.z - ez) / 0.0105) ** 2 < 1.0 for sx in (1, -1)) or \
@@ -1055,6 +1056,7 @@ if IN_BLENDER:
 
         bm = bmesh.new()
         bm.from_mesh(me)
+        bm.transform(body.matrix_world)
         bm.verts.ensure_lookup_table()
         keep = set()
         for f in bm.faces:
@@ -1093,17 +1095,17 @@ if IN_BLENDER:
             dx = min(abs(p.x - ex), abs(p.x + ex))
             # cheeks: faint warm flush
             ck = math.exp(-((dx - 0.012) / 0.02) ** 2 - ((p.z - (ez - 0.035)) / 0.018) ** 2)
-            c = c.lerp(V((0.62, 0.36, 0.28)), 0.25 * ck)
+            c = c.lerp(V((0.66, 0.36, 0.28)), 0.35 * ck)
             # brows: dark arcs
-            bz = ez + 0.021 - 0.25 * (abs(p.x) - ex) ** 2 / 0.02
-            br = math.exp(-((p.z - bz) / 0.0045) ** 2) * (1.0 - smoothstep(0.022, 0.034, dx)) * (1 if abs(p.x) > 0.008 else 0)
-            c = c.lerp(V((0.06, 0.04, 0.03)), min(1.0, 1.2 * br))
+            bz = ez + 0.031 - 0.25 * (abs(p.x) - ex) ** 2 / 0.02
+            br = math.exp(-((p.z - bz) / 0.0085) ** 2) * (1.0 - smoothstep(0.028, 0.044, dx)) * (1 if abs(p.x) > 0.008 else 0)
+            c = c.lerp(V((0.05, 0.035, 0.025)), min(1.0, 1.7 * br))
             # dark rims round the eye holes
-            er = math.exp(-(((dx) / 0.022) ** 2 + ((p.z - ez) / 0.0145) ** 2) * 2.0)
-            c = c.lerp(V((0.10, 0.07, 0.05)), 0.75 * er)
+            er = math.exp(-(((dx) / 0.030) ** 2 + ((p.z - ez) / 0.020) ** 2) * 1.2)
+            c = c.lerp(V((0.10, 0.07, 0.05)), 0.85 * er)
             # red-ochre lips round the open mouth
-            lp = math.exp(-((p.x / 0.033) ** 2 + ((p.z - mz) / 0.019) ** 2) * 2.2)
-            c = c.lerp(V((0.42, 0.13, 0.09)), 0.85 * lp)
+            lp = math.exp(-((p.x / 0.045) ** 2 + ((p.z - mz) / 0.030) ** 2) * 1.0)
+            c = c.lerp(V((0.45, 0.12, 0.08)), min(1.0, 1.3 * lp))
             v[col_l] = (*c, 1.0)
         mm = bpy.data.meshes.new(name + " mask")
         bm.to_mesh(mm)
@@ -1130,6 +1132,15 @@ if IN_BLENDER:
                 for v in a.data.vertices:
                     w = a.matrix_world @ v.co
                     v.co = a.matrix_world.inverted() @ (hc + (w - hc) * (scale + 0.02))
+                if trim_wig:
+                    # trim the long hair to the shoulders (a mature man's tragic wig)
+                    zcut = (rig.matrix_world @ P.P("neck01")).translation.z - 0.06
+                    bmw = bmesh.new()
+                    bmw.from_mesh(a.data)
+                    mwa = a.matrix_world
+                    bmesh.ops.delete(bmw, geom=[v for v in bmw.verts if (mwa @ v.co).z < zcut], context="VERTS")
+                    bmw.to_mesh(a.data)
+                    bmw.free()
                 a.name = name + " wig"
         if beard:
             out.append(build_beard(name, mask, H, hair_col))
@@ -1157,55 +1168,61 @@ if IN_BLENDER:
                 bs.inputs["Base Color"].default_value = (*col, 1.0)
             bs.inputs["Roughness"].default_value = 0.6
 
-    def build_beard(name, mask, H, col):
-        """particle-hair beard on the lower mask (the wig-maker's beard, attached to the mask)"""
-        ez, ex = H["ez"], abs(H["eL"].x)
-        mz = ez - 0.068
+    def build_beard(name, mask, H, col, n=2600, seed=7):
+        """a full wig-maker's beard and moustache attached to the lower mask: hair curves rooted on
+        the mask's jaw, chin and upper lip, falling down and a little forward, with curl"""
+        import random as _r
+        rr = _r.Random(seed)
         me = mask.data
-        pl = me.attributes.get("paint")
+        mw = mask.matrix_world
         bm = bmesh.new()
         bm.from_mesh(me)
-        # emitter: the jaw / chin / upper-lip zone of the mask, picked by height below the eyes
-        zs = sorted(v.co.z for v in bm.verts)
-        bm.verts.ensure_lookup_table()
-        # use the mask's own geometry: lower 42 % of its height, minus the lips
-        z0, z1 = zs[0], zs[-1]
-        zc = z0 + 0.42 * (z1 - z0)
-        dele = [f for f in bm.faces if f.calc_center_median().z > zc]
-        bmesh.ops.delete(bm, geom=dele, context="FACES")
+        bm.transform(mw)
         bm.normal_update()
-        em_me = bpy.data.meshes.new(name + " beard emitter")
-        bm.to_mesh(em_me)
+        zs = [v.co.z for v in bm.verts]
+        z0, z1 = min(zs), max(zs)
+        zc = z0 + 0.40 * (z1 - z0)
+        tris = []
+        for f in bm.faces:
+            c = f.calc_center_median()
+            if c.z < zc:
+                tris.append((f, f.calc_area()))
+        tot = sum(a for _, a in tris)
+        down = V((0, 0, -1))
+        curves = bpy.data.hair_curves.new(name + " beard")
+        K = 6
+        curves.add_curves([K] * n)
+        pos, rad = [], []
+        for i in range(n):
+            x = rr.random() * tot
+            for f, a in tris:
+                x -= a
+                if x <= 0:
+                    break
+            vs = [v.co for v in f.verts]
+            u, w = rr.random(), rr.random()
+            if u + w > 1:
+                u, w = 1 - u, 1 - w
+            root = vs[0] + (vs[1] - vs[0]) * u + (vs[-1] - vs[0]) * w
+            nrm = f.normal.copy()
+            L = 0.045 + 0.035 * rr.random() * (1.0 - (root.z - z0) / max(1e-6, zc - z0)) + 0.01
+            d = (nrm * 0.55 + down * 1.0).normalized()
+            p = root.copy()
+            ph = rr.random() * 6.28
+            for k in range(K):
+                t = k / (K - 1)
+                curl = V((math.cos(ph + t * 9), math.sin(ph + t * 9), 0)) * 0.004 * t
+                pos.append(p + curl)
+                rad.append(0.0007 * (1.0 - 0.7 * t))
+                dd = (d + down * 0.35 * t).normalized()
+                p = p + dd * (L / (K - 1))
+        curves.attributes["position"].data.foreach_set("vector", [c for v in pos for c in v])
+        ra = curves.attributes.get("radius") or curves.attributes.new("radius", "FLOAT", "POINT")
+        ra.data.foreach_set("value", rad)
         bm.free()
-        em = bpy.data.objects.new(name + " beard", em_me)
-        em.matrix_world = mask.matrix_world.copy()
-        hm = mat_hair_bsdf(name + " beard hair", col)
-        em_me.materials.append(hm)
-        ps = em.modifiers.new("Beard", "PARTICLE_SYSTEM").particle_system
-        st = ps.settings
-        st.type = "HAIR"
-        st.count = 900
-        st.hair_length = 0.055
-        st.emit_from = "FACE"
-        st.use_emit_random = True
-        st.normal_factor = 0.55
-        st.object_align_factor = (0.0, 0.0, -0.75)
-        st.child_type = "INTERPOLATED"
-        st.rendered_child_count = 14
-        for k, v in (("child_percent", 4), ("child_display_percent", 4), ("display_percentage", 100)):
-            if hasattr(st, k):
-                setattr(st, k, v)
-        st.clump_factor = 0.55
-        st.roughness_1 = 0.012
-        st.roughness_2 = 0.01
-        st.kink = "CURL"
-        st.kink_amplitude = 0.004
-        st.kink_frequency = 6.0
-        st.root_radius = 1.0
-        st.tip_radius = 0.25
-        st.radius_scale = 0.0008
-        em.show_instancer_for_render = False
-        return em
+        ob = bpy.data.objects.new(name + " beard", curves)
+        curves.materials.append(mat_hair_bsdf(name + " beard hair", col))
+        return ob
 
     def mat_hair_bsdf(name, col):
         m = bpy.data.materials.new(name)
@@ -1228,6 +1245,7 @@ if IN_BLENDER:
         rest = [V(d.vector) for d in me.attributes["rest_co"].data]
         bm = bmesh.new()
         bm.from_mesh(me)
+        bm.transform(body.matrix_world)
         dele = [f for f in bm.faces if not all(rest[v.index].z < 0.20 for v in f.verts)]
         bmesh.ops.delete(bm, geom=dele, context="FACES")
         bm.normal_update()
@@ -1237,7 +1255,6 @@ if IN_BLENDER:
         bm.to_mesh(mb)
         bm.free()
         ob = bpy.data.objects.new(name + " boots", mb)
-        ob.matrix_world = body.matrix_world.copy()
         mb.materials.append(bpy.data.materials.get("Soft leather boots") or mat_simple("Soft leather boots", (0.09, 0.06, 0.045), rough=0.6, bump=0.2, bump_scale=80))
         for poly in mb.polygons:
             poly.use_smooth = True
@@ -1276,22 +1293,21 @@ if IN_BLENDER:
         return 0.5 * ((2 * p1) + (-p0 + p2) * u + (2 * p0 - 5 * p1 + 4 * p2 - p3) * u * u + (-p0 + 3 * p1 - 3 * p2 + p3) * u ** 3)
 
     HIMATION = [
-        # (mode, a, b, width dir (l, f, u), half-width)   mode side: angle from front toward left, height
-        ("side", 22, 1.13, (1, 0, 0), 0.15),
-        ("side", 26, 1.36, (1, 0, 0), 0.15),
-        ("top", 0.15, 0.06, (1, 0, -0.25), 0.15),
-        ("top", 0.16, -0.06, (1, 0, -0.3), 0.15),
-        ("side", 158, 1.40, (0.95, 0, -0.3), 0.26),
-        ("side", 186, 1.17, (0.81, 0, -0.59), 0.40),
-        ("side", 236, 0.97, (0.45, 0, -0.9), 0.42),
-        ("side", 272, 0.87, (0, 0, -1), 0.42),
-        ("side", 320, 0.85, (0, 0, -1), 0.40),
-        ("side", 358, 0.87, (-0.1, 0, -1), 0.35),
-        ("side", 22, 0.95, (-0.25, 0, -1), 0.20),
-        ("hand", 0, 0, (-0.3, 0, -1), 0.06),
+        # (mode, a, b, width dir (l, f, u), half-width). side: a = angle from the front toward
+        # the left (deg), b = height; top: a, b = (left, front) over the shoulder, cast down.
+        # A mantle over the left shoulder and upper arm: the front part falls over the raised
+        # left forearm, the back part hangs down the back to the calves.
+        ("side", 34, 0.50, (1, 0.15, 0), 0.31),
+        ("side", 40, 1.05, (1, 0.15, 0), 0.31),
+        ("side", 46, 1.38, (1, 0.1, 0), 0.25),
+        ("top", 0.20, 0.05, (1, 0, -0.25), 0.20),
+        ("top", 0.20, -0.07, (1, 0, -0.25), 0.20),
+        ("side", 150, 1.35, (1, 0, 0), 0.31),
+        ("side", 162, 0.98, (1, 0, -0.1), 0.35),
+        ("side", 170, 0.45, (1, 0, -0.1), 0.38),
     ]
 
-    def build_himation(name, fig, colliders, W=1.25, res=0.025):
+    def build_himation(name, fig, colliders, W=0.70, res=0.022):
         B = fig["frame"]
         P = fig["poser"]
         bvh = bvh_of(colliders)
@@ -1304,11 +1320,12 @@ if IN_BLENDER:
                 o = V((axis_o.x, axis_o.y, b)) + d * 1.2
                 hit = bvh.ray_cast(o, -d, 2.0)
                 p = hit[0] if hit[0] is not None else V((axis_o.x, axis_o.y, b)) + d * 0.25
-                c = p + d * 0.045
+                c = p + d * 0.03
             elif mode == "top":
                 o = B.p(a, b, 2.2)
+                o = V((o.x, o.y, 2.2))
                 hit = bvh.ray_cast(o, V((0, 0, -1)), 2.0)
-                c = (hit[0] if hit[0] is not None else B.p(a, b, 1.5)) + V((0, 0, 0.045))
+                c = (hit[0] if hit[0] is not None else B.p(a, b, 1.5)) + V((0, 0, 0.025))
             else:
                 c = P.head("wrist.L") + B.U * 0.06 + B.Fw * 0.01
             cs.append(c)
@@ -1345,17 +1362,15 @@ if IN_BLENDER:
                 nrm = -nrm
             elif c.z >= 1.45 and nrm.z < 0:
                 nrm = -nrm
-            seg = W / (nw - 1)
-            proj = 2 * hw / (nw - 1)
-            amp = math.sqrt(max(0.0, seg * seg - proj * proj))
+            amp = 0.0
             for j in range(nw):
                 tt = -1.0 + 2.0 * j / (nw - 1)
                 zig = (0.5 * amp) * (1 if j % 2 else -1) if amp > 0.002 else 0.0
                 verts.append(c + w * (tt * hw) + nrm * (zig + 0.5 * amp))
-                rest_co.append(V((tt * W / 2, s, 0.0)))
+                rest_co.append(V((tt * hw, s, 0.0)))
                 pin = 0.0
-                if r >= nrows - 2:
-                    pin = 1.0
+                if abs(t - 3.5 / (len(cs) - 1)) < 0.4 / (len(cs) - 1) and abs(tt) < 0.3:
+                    pin = 1.0                      # on top of the shoulder
                 pinw.append(pin)
         faces = [(r * nw + j, r * nw + j + 1, (r + 1) * nw + j + 1, (r + 1) * nw + j) for r in range(nrows) for j in range(nw - 1)]
         me = bpy.data.meshes.new(name + " himation")
@@ -1391,7 +1406,7 @@ if IN_BLENDER:
         for j in range(ny + 1):
             for i in range(nx + 1):
                 x, y = -w / 2 + w * i / nx, -h / 2 + h * j / ny
-                p = rot @ V((x, y, 0.0)) + V((0.42, 0.12, ztop + 0.04 + 0.015 * math.sin(x * 9) * math.cos(y * 7)))
+                p = rot @ V((x, y, 0.0)) + V((0.42, -0.08, ztop + 0.04 + 0.015 * math.sin(x * 9) * math.cos(y * 7)))
                 verts.append(p)
         faces = [(j * (nx + 1) + i, j * (nx + 1) + i + 1, (j + 1) * (nx + 1) + i + 1, (j + 1) * (nx + 1) + i) for j in range(ny) for i in range(nx)]
         me = bpy.data.meshes.new(name + " blanket")
@@ -1443,20 +1458,20 @@ if IN_BLENDER:
             name = c.name.replace("MH ", "").replace(" (frozen)", "")
             groups[name] = list(c.objects)
             for o in c.objects:
+                mb = o.matrix_basis.copy()         # (unparented: basis = world, platform-local)
                 if name == "Reclining actor":
-                    mw = o.matrix_world.copy()
                     o.parent = ctrl
                     o.matrix_parent_inverse = Matrix.Identity(4)
-                    o.matrix_basis = mw            # platform-local = local to the platform rig
+                    o.matrix_basis = mb            # platform-local = local to the platform rig
                 elif name == "Standing actor":
-                    o.matrix_world = Matrix.Translation((0, ctrl_y[SHOTS["tableau"][1]], 0)) @ o.matrix_world
+                    o.matrix_basis = Matrix.Translation((0, ctrl_y[SHOTS["tableau"][1]], 0)) @ mb
                 else:
-                    o.matrix_world = Matrix.Translation((0, ctrl_y[SHOTS["cutaway"][1]], 0)) @ o.matrix_world
+                    o.matrix_basis = Matrix.Translation((0, ctrl_y[SHOTS["cutaway"][1]], 0)) @ mb
         return groups
 
     def render(opts):
         work = os.path.abspath(opts["work"])
-        outdir = os.path.join(work, "renders")
+        outdir = os.path.join(work, opts.get("outname", "renders"))
         os.makedirs(outdir, exist_ok=True)
         spp = int(opts.get("samples", 64))
         only = opts.get("only", "AB")
@@ -1520,7 +1535,7 @@ if IN_BLENDER:
             from bpy_extras.object_utils import world_to_camera_view
             sc.frame_set(SHOTS["tableau"][1])
             cam = bpy.data.objects[SHOTS["tableau"][0]]
-            mask = next(o for o in groups["Reclining actor"] if o.name.endswith(" mask"))
+            mask = next(o for o in groups["Reclining actor"] if "mask" in o.name and "mask lining" not in o.name)
             pc = world_to_camera_view(sc, cam, mask.matrix_world @ (sum((V(b) for b in mask.bound_box), Vector()) / 8))
             cw, ch = 0.26, 0.46
             crop = (max(0, pc.x - cw * 0.55), min(1, pc.x + cw * 0.45), max(0, pc.y - ch * 0.62), min(1, pc.y + ch * 0.38))
@@ -1607,6 +1622,9 @@ if IN_BLENDER:
         "reclining_front": ((-0.1, 2.0, 1.45), (-0.2, -0.2, 1.05), 35, (800, 600)),
         "reclining_top": ((-0.1, -0.2, 3.2), (-0.1, -0.2, 0.9), 35, (800, 600)),
         "cutaway_cam": ((-5.62, 0.53, 3.46), (0.32, 0.65, 0.8), 30, (960, 540)),
+        "standing_backleft": ((1.3, 2.6, 1.5), (2.0, 0.7, 1.05), 40, (640, 800)),
+        "masks_close": ((1.0, 1.3, 1.62), (1.95, 0.64, 1.62), 60, (640, 640)),
+        "reclining_mask": ((-0.15, 0.8, 1.55), (-0.52, -0.12, 1.5), 55, (640, 640)),
         "stagehands_side": ((-2.6, -1.3, 0.9), (0.0, -1.2, 0.4), 35, (800, 600)),
         "stagehands_back": ((0.0, -3.6, 1.4), (0.0, -1.0, 0.4), 35, (800, 600)),
     }
@@ -1618,6 +1636,23 @@ if IN_BLENDER:
         stage = opts.get("stage", "full")
         if opts.get("resume") == "cloth":
             return resume_from_cloth(work, t0)
+        if stage == "figpreview":
+            # look at the finished figures.blend with the platform and couch for context
+            bpy.ops.wm.open_mainfile(filepath=os.path.join(work, "figures.blend"))
+            with bpy.data.libraries.load(os.path.abspath(opts["scene"]), link=False) as (src, dst):
+                dst.objects = list(CONTEXT_OBJECTS)
+            for o in dst.objects:
+                bpy.context.scene.collection.objects.link(o)
+                mb = o.matrix_basis.copy()
+                o.parent = None
+                o.matrix_world = mb
+            pdir = os.path.join(work, "preview")
+            os.makedirs(pdir, exist_ok=True)
+            for v, (cl, tg, lens, res) in PREVIEW_VIEWS.items():
+                if opts.get("views") and v not in opts["views"].split(","):
+                    continue
+                preview(os.path.join(pdir, "fig_" + v + ".png"), cl, tg, lens, res)
+            return
         bpy.ops.wm.read_homefile(use_empty=True)
         sc = bpy.context.scene
         sc.render.fps = FPS
@@ -1697,8 +1732,8 @@ if IN_BLENDER:
         couch = [bpy.data.objects[n] for n in ("Mattress", "Cushion 0", "Cushion 1", "Couch (kline)")]
         finish_build(figs, work, couch, t0)
 
-    MASKS = {"Standing actor": dict(paint=(0.74, 0.67, 0.55), hair=(0.035, 0.028, 0.022), beard=True),
-             "Reclining actor": dict(paint=(0.80, 0.74, 0.63), hair=(0.075, 0.048, 0.03), beard=False)}
+    MASKS = {"Standing actor": dict(paint=(0.60, 0.52, 0.41), hair=(0.035, 0.028, 0.022), beard=True),
+             "Reclining actor": dict(paint=(0.60, 0.53, 0.42), hair=(0.075, 0.048, 0.03), beard=False)}
 
     def finish_build(figs, work, couch, t0):
         sc = bpy.context.scene
@@ -1711,7 +1746,7 @@ if IN_BLENDER:
         # masks, wigs, beard; boots
         for name, mp in MASKS.items():
             if name in figs:
-                out[name] += build_mask(name, figs[name], mp["paint"], mp["hair"], beard=mp["beard"])
+                out[name] += build_mask(name, figs[name], mp["paint"], mp["hair"], beard=mp["beard"], trim_wig=mp["beard"])
         if "Standing actor" in figs:
             out["Standing actor"].append(build_boots("Standing actor", figs["Standing actor"]["body"]))
         print("MASKS %.1fs" % (time.time() - t0))
@@ -1722,28 +1757,28 @@ if IN_BLENDER:
             cols = [f["body"], f["garment"]]
             cc = get_coll("COL2 Standing")
             for o in cols:
-                make_collider(o, thick=0.008)
+                make_collider(o, thick=0.008, friction=40.0)
                 cc.objects.link(o)
             him = build_himation("Standing actor", f, cols)
-            add_cloth(him, cc, 70, mass=0.35, bend=1.2, tension=15.0, quality=7, air=2.0)
+            add_cloth(him, cc, 90, mass=0.3, bend=0.6, tension=15.0, quality=7, air=2.0)
             drapes.append(("Standing actor", him))
         if "Reclining actor" in figs:
             f = figs["Reclining actor"]
-            cols = [f["body"], f["garment"]] + couch
+            cols = [f["body"], f["garment"]] + couch + [bpy.data.objects["Platform deck"]]
             cc = get_coll("COL2 Reclining")
             for o in cols:
-                make_collider(o, thick=0.007)
+                make_collider(o, thick=0.007, friction=10.0)
                 if o.name not in cc.objects:
                     cc.objects.link(o)
             bl = build_blanket("Reclining actor", f, cols)
-            add_cloth(bl, cc, 70, pin=None, mass=0.4, bend=2.0, tension=15.0, quality=6, rest_key=None)
+            add_cloth(bl, cc, 90, pin=None, mass=0.4, bend=2.0, tension=15.0, quality=6, rest_key=None)
             drapes.append(("Reclining actor", bl))
         for o in bpy.data.objects:
             if o.animation_data:
                 o.animation_data_clear()
-        sc.frame_start, sc.frame_end = 1, 70
+        sc.frame_start, sc.frame_end = 1, 90
         t1 = time.time()
-        for fr in range(1, 71):
+        for fr in range(1, 91):
             sc.frame_set(fr)
         print("DRAPE SIM %.1fs" % (time.time() - t1))
         for name, o in drapes:
@@ -1773,6 +1808,8 @@ if IN_BLENDER:
             c = get_coll("MH " + name + " (frozen)", top)
             for o in objs:
                 link_to(o, c)
+                if not o.name.startswith("MH "):
+                    o.name = "MH " + o.name          # no clashes with the mannequins' names
                 keep.add(o.name)
         for o in list(bpy.data.objects):
             if o.name not in keep:
@@ -1843,7 +1880,7 @@ def compose(opts):
         os.makedirs(repo, exist_ok=True)
         for name, im in outs:
             path = os.path.join(repo, name + ".jpg")
-            q = 90
+            q = 95
             while True:
                 im.save(path, quality=q, optimize=True, progressive=True)
                 if os.path.getsize(path) < 1.9e6 or q <= 60:
