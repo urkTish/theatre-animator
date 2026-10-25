@@ -968,14 +968,17 @@ def build_acropolis():
         b.add(verts, [(0, 1, 5, 4), (1, 2, 6, 5), (2, 3, 7, 6), (3, 0, 4, 7), (4, 5, 6, 7)])
     wall = b.obj("Acropolis south wall", "Landscape", [mat_stone("Limestone ashlar", (0.56, 0.52, 0.45))])
 
-    # Parthenon (438/432 BC), simplified: 8 x 17 Doric columns, stylobate 69.5 x 30.9 m
-    marble = mat_plain("Pentelic marble", (0.58, 0.53, 0.45), rough=0.5, sss=0.0, bump=0.2, bump_scale=3.0)
+    # Parthenon (438/432 BC), simplified: stepped krepidoma, 8 x 17 Doric columns on a
+    # 69.5 x 30.9 m stylobate, architrave/frieze/cornice, low-pitched roof (~15 deg) with a
+    # recessed pediment under raking cornices at each short end
+    marble = mat_plain("Pentelic marble", (0.53, 0.48, 0.41), rough=0.5, sss=0.0, bump=0.2, bump_scale=3.0)
+    tiles = mat_plain("Marble roof tiles", (0.47, 0.43, 0.37), rough=0.6, bump=0.3, bump_scale=6.0)
     cx, cy = -59.0, 146.0
-    z0 = terrain_h(cx, cy) - 0.4
+    z0 = terrain_h(cx, cy) + 0.1
     L, W = 69.5, 30.9
     p = Builder()
-    for i, (dl, dh) in enumerate(((2.2, 0.0), (1.4, 0.55), (0.7, 1.1))):
-        p.box(cx - L / 2 - dl, cx + L / 2 + dl, cy - W / 2 - dl, cy + W / 2 + dl, z0 - 2.0 if i == 0 else z0 + dh - 0.55, z0 + dh + 0.55)
+    for i, (dl, z1) in enumerate(((1.4, 0.55), (0.7, 1.1), (0.0, 1.65))):     # three steps, 0.55 m each
+        p.box(cx - L / 2 - dl, cx + L / 2 + dl, cy - W / 2 - dl, cy + W / 2 + dl, z0 - (2.0 if i == 0 else 0.0) + (z1 - 0.55 if i else 0.0), z0 + z1)
     zs = z0 + 1.65
     col_h = 10.43
     for i in range(17):
@@ -986,16 +989,33 @@ def build_acropolis():
             y = cy - W / 2 + 1.2 + j * (W - 2.4) / 7
             v, f = cylinder_geom(0.95, 0.0, col_h, 16, "Z", (x, y, zs), r1=0.75)
             p.add(v, f)
-    # cella walls behind the colonnade
-    p.box(cx - L / 2 + 5.5, cx + L / 2 - 5.5, cy - W / 2 + 5.0, cy + W / 2 - 5.0, zs, zs + col_h)
-    # entablature and roof with pediments
+            p.box(x - 1.0, x + 1.0, y - 1.0, y + 1.0, zs + col_h - 0.35, zs + col_h)   # abacus
+    p.box(cx - L / 2 + 5.5, cx + L / 2 - 5.5, cy - W / 2 + 5.0, cy + W / 2 - 5.0, zs, zs + col_h)   # cella
     ze = zs + col_h
-    p.box(cx - L / 2 + 0.1, cx + L / 2 - 0.1, cy - W / 2 + 0.1, cy + W / 2 - 0.1, ze, ze + 3.3)
-    zr = ze + 3.3
-    ridge = 3.4
-    v = [(cx - L / 2, cy - W / 2 - 0.3, zr), (cx + L / 2, cy - W / 2 - 0.3, zr), (cx + L / 2, cy + W / 2 + 0.3, zr),
-         (cx - L / 2, cy + W / 2 + 0.3, zr), (cx - L / 2, cy, zr + ridge), (cx + L / 2, cy, zr + ridge)]
-    p.add(v, [(0, 1, 5, 4), (2, 3, 4, 5), (0, 4, 3), (1, 2, 5), (0, 3, 2, 1)])
+    p.box(cx - L / 2 + 0.25, cx + L / 2 - 0.25, cy - W / 2 + 0.25, cy + W / 2 - 0.25, ze, ze + 1.35)  # architrave
+    p.box(cx - L / 2 + 0.3, cx + L / 2 - 0.3, cy - W / 2 + 0.3, cy + W / 2 - 0.3, ze + 1.35, ze + 2.7)  # frieze
+    p.box(cx - L / 2 - 0.2, cx + L / 2 + 0.2, cy - W / 2 - 0.2, cy + W / 2 + 0.2, ze + 2.7, ze + 3.3)  # cornice
+    zc = ze + 3.3
+    ridge = 4.1
+    # tympanum: triangular prism set back 0.7 m from each end
+    x0, x1 = cx - L / 2 + 0.7, cx + L / 2 - 0.7
+    hw = W / 2 - 0.1
+    v = [(x0, cy - hw, zc), (x0, cy + hw, zc), (x0, cy, zc + ridge - 0.45),
+         (x1, cy - hw, zc), (x1, cy + hw, zc), (x1, cy, zc + ridge - 0.45)]
+    p.add(v, [(0, 2, 1), (3, 4, 5), (0, 3, 5, 2), (2, 5, 4, 1), (0, 1, 4, 3)])
+    parth_roof = Builder()
+    # roof slopes as 0.45 m slabs running past the tympanum: their ends are the raking cornices
+    for sgn in (-1, 1):
+        e_out = (cy + sgn * (W / 2 + 0.35), zc - 0.05)
+        top = (cy, zc + ridge)
+        xa, xb = cx - L / 2 - 0.25, cx + L / 2 + 0.25
+        vv = [(xa, e_out[0], e_out[1]), (xb, e_out[0], e_out[1]), (xb, top[0], top[1]), (xa, top[0], top[1]),
+              (xa, e_out[0], e_out[1] - 0.45), (xb, e_out[0], e_out[1] - 0.45), (xb, top[0], top[1] - 0.45), (xa, top[0], top[1] - 0.45)]
+        ff = [(0, 1, 2, 3), (7, 6, 5, 4), (0, 4, 5, 1), (3, 2, 6, 7), (0, 3, 7, 4), (1, 5, 6, 2)]
+        if sgn > 0:
+            ff = [tuple(reversed(fc)) for fc in ff]
+        parth_roof.add(vv, ff)
+    parth_roof.obj("Parthenon roof (simplified)", "Landscape", [tiles])
     parth = p.obj("Parthenon (simplified)", "Landscape", [marble])
     return wall, parth
 
@@ -1085,7 +1105,7 @@ def _mat_toned(name, c0, c1, rough):
 
 
 def mat_city_wall():
-    return _mat_toned("House walls (plastered mudbrick)", (0.24, 0.20, 0.15), (0.40, 0.35, 0.28), 0.9)
+    return _mat_toned("House walls (plastered mudbrick)", (0.20, 0.17, 0.13), (0.34, 0.30, 0.24), 0.9)
 
 
 def mat_city_roof():
@@ -2341,7 +2361,7 @@ def build_stagehand(name):
     # short dark hair cap
     head = fig.seg["head"].obj
     bm = bmesh.new()
-    bmesh.ops.create_uvsphere(bm, u_segments=28, v_segments=16, radius=1.0)
+    bmesh.ops.create_uvsphere(bm, u_segments=56, v_segments=36, radius=1.0)
     for vtx in bm.verts:
         vtx.co.x *= 0.084 * fig.s
         vtx.co.y *= 0.102 * fig.s
@@ -2350,7 +2370,10 @@ def build_stagehand(name):
         vtx.co.y += 0.006 * fig.s
     for f in list(bm.faces):
         c = f.calc_center_median()
-        if (c.z < 0.11 * fig.s and c.y > -0.02) or c.z < 0.06 * fig.s:
+        # hairline: high on the forehead, over the ears at the sides, down to the nape behind
+        fy = max(-1.0, min(1.0, c.y / (0.102 * fig.s)))
+        hairline = (0.105 + 0.07 * max(0.0, fy) - 0.045 * max(0.0, -fy)) * fig.s
+        if c.z < hairline:
             bm.faces.remove(f)
     me = bpy.data.meshes.new(name + " hair")
     bm.to_mesh(me)
@@ -2837,9 +2860,10 @@ def build_cameras():
         return cam
 
     shot("SH01 establishing", 0.0, 5.0, False, False, [
-        (0.0, (-46.0, -78.0, 35.0), (-8.0, 46.0, 24.0), 26.0),
-        (5.0, (-40.0, -69.0, 30.0), (-7.0, 43.0, 22.0), 26.0)],
-        desc="aerial from the south-west: the theatre on the hillside, the Acropolis and the Parthenon above")
+        (0.0, (-262.0, -222.0, 90.0), (-29.0, 65.0, 29.0), 52.0),
+        (5.0, (-248.0, -208.0, 83.0), (-31.0, 64.0, 29.0), 54.0)],
+        desc="telephoto aerial from the far south-west: the theatre on the hillside; above it the Acropolis "
+             "and the Parthenon, its west pediment and roof ridge seen obliquely")
     shot("SH02 descent", 5.0, 15.0, False, False, [
         (5.0, (-9.0, 74.0, 40.0), (0.0, 2.0, 0.0), 30.0),
         (10.0, (-4.0, 42.0, 15.0), (0.0, -1.0, 1.5), 34.0),

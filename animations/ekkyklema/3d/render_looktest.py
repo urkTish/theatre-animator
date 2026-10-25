@@ -1,7 +1,7 @@
 """Render the Phase-1 look test and the timing probes from ekkyklema.blend.
 
     blender -b ekkyklema.blend -P render_looktest.py -- stills  OUTDIR [SAMPLES] [TAG ...]
-    blender -b ekkyklema.blend -P render_looktest.py -- clip    OUTDIR [SAMPLES] [PERCENT]
+    blender -b ekkyklema.blend -P render_looktest.py -- clip    OUTDIR [SAMPLES] [PERCENT] [FIRST LAST]
     blender -b ekkyklema.blend -P render_looktest.py -- timing  OUTDIR
 
 stills: the four 1920x1080 look-test frames (a)-(d), plus timing per frame.
@@ -88,6 +88,8 @@ elif mode == "clip":
     sc.render.resolution_x, sc.render.resolution_y, sc.render.resolution_percentage = 1280, 720, pct
     sc.cycles.samples = spp
     f0, f1 = F(30.8), F(38.8) - 1
+    if len(argv) > 5:                          # optional sub-range (re-render part of the clip)
+        f0, f1 = int(argv[4]), int(argv[5])
     t0 = time.time()
     for fr in range(f0, f1 + 1):
         sc.frame_set(fr)
