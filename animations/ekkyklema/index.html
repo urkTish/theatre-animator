@@ -1,0 +1,1167 @@
+<title>Ekkyklema</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="A 90-second animated explainer of the ekkyklema, the wheeled platform rolled out through the skene door of the Theatre of Dionysus.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=GFS+Didot&family=Inter:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap">
+<style>
+/* Layout: one film "stage" (16:9; portrait 9:16 under 720px) carrying drawings, captions,
+   citation and evidence legend; transport controls sit underneath. Tokens follow shared/STYLE.md. */
+:root{
+  --ink:#1d1a17; --clay:#c8743c; --clay-light:#e9b48a; --wood:#8a5a34; --wood-light:#c49a6c;
+  --stone:#d9d2c3; --sky:#f4efe6; --accent:#2f5d73; --accent-2:#7a4f8c; --blood:#8e1f1f;
+  /* derived tokens */
+  --black:#1d1a17;        /* figure detail lines: black-figure black in both themes */
+  --facade:#b38c69;       /* skene timber, lighter fill = [I] */
+  --facade-line:#7d5230;
+  --leaf:#a27a55;
+  --clay-dark:#a65a2a;
+  --cloth:#efe3cc;
+  --marble:#e4ddd0;
+  --interior:#2a1f16; --interior-2:#3b2c20;
+  --backstage:#e9e0d0;
+  --hand:#4b443d;
+  --paper:#fbf8f2; --muted:#62574d; --rule:#d3c8b6; --panel:#f7f3ec;
+  --glow:#f6d6a0;
+  --font-ui:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --font-greek:"GFS Didot","Didot","Georgia","Times New Roman",serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ink:#efe6d8; --sky:#1a1714; --stone:#4a4239; --accent:#82b6cf; --accent-2:#bb8fd4; --blood:#a83232;
+    --facade:#8d6a4c; --facade-line:#5a3a20; --leaf:#7c5a3d; --cloth:#dccfb6; --marble:#bfb7a9;
+    --interior:#0c0907; --interior-2:#1a130e; --backstage:#27211c; --hand:#0b0907;
+    --paper:#24201c; --muted:#b9ac9a; --rule:#4a4139; --panel:#1f1b18; --glow:#4a3418;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --ink:#efe6d8; --sky:#1a1714; --stone:#4a4239; --accent:#82b6cf; --accent-2:#bb8fd4; --blood:#a83232;
+  --facade:#8d6a4c; --facade-line:#5a3a20; --leaf:#7c5a3d; --cloth:#dccfb6; --marble:#bfb7a9;
+  --interior:#0c0907; --interior-2:#1a130e; --backstage:#27211c; --hand:#0b0907;
+  --paper:#24201c; --muted:#b9ac9a; --rule:#4a4139; --panel:#1f1b18; --glow:#4a3418;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--sky);color:var(--ink);font-family:var(--font-ui);margin:0}
+.app{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px 18px;display:flex;flex-direction:column;align-items:center;gap:10px}
+.masthead{width:100%;max-width:var(--stage-w,1400px);display:flex;justify-content:space-between;align-items:baseline;gap:8px 16px;flex-wrap:wrap}
+.kicker{margin:0;font-size:12px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.kicker b{color:var(--ink);font-weight:600}
+.mutenote{margin:0;font-size:12px;color:var(--muted)}
+.gk{font-family:var(--font-greek);font-style:italic;font-weight:400}
+.gr{font-family:var(--font-greek);font-style:normal;font-weight:400}
+
+/* ---------- stage ---------- */
+.stage{position:relative;container-type:inline-size;width:min(100%,max(620px,calc((100svh - 200px) * 16 / 9)));max-width:100%;aspect-ratio:16/9;background:var(--sky);border:1px solid var(--rule);border-radius:10px;overflow:hidden;margin:0}
+.stage[data-mode="tall"]{aspect-ratio:9/16;width:min(100%,max(300px,calc((100svh - 196px) * 9 / 16)))}
+.stage>svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+.ov{position:absolute;pointer-events:none}
+.cap{left:2.5cqw;top:1.7cqw;width:95cqw}
+.capblock{position:absolute;left:0;top:0;width:100%}
+.capline{display:grid}
+.capline>span{grid-area:1/1}
+.c-eyebrow{font-size:1.02cqw;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:.35cqw}
+.c-main,.c-q,.c-term{font-size:2.05cqw;line-height:1.22;font-weight:600;letter-spacing:-.01em;text-wrap:balance}
+.c-q{color:var(--accent)}
+.c-term{font-weight:500}
+.c-term .gk{font-size:1.22em}
+.c-detail{font-size:1.42cqw;line-height:1.4;color:var(--muted);margin-top:.35cqw;max-width:62em;text-wrap:pretty}
+.cap .gk{font-size:1.12em;line-height:1}
+.cite{left:2.5cqw;bottom:1.55cqw;max-width:58cqw;display:grid;font-size:1.05cqw;line-height:1.35;color:var(--muted)}
+.cite>span{grid-area:1/1}
+.legend{right:2.4cqw;bottom:1.3cqw;display:flex;gap:1.5cqw;font-size:.98cqw;color:var(--ink);align-items:center}
+.lg{display:flex;align-items:center;gap:.45em;white-space:nowrap}
+.lg svg{width:2.4em;height:1.3em;overflow:visible}
+.titlecard{left:0;right:0;top:3.4cqw;text-align:center;display:flex;flex-direction:column;align-items:center;gap:.5cqw}
+.tc-eyebrow{font-size:1.05cqw;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0}
+.tc-title{margin:0;font-size:6.2cqw;line-height:1.05;font-weight:400;display:flex;gap:.35em;justify-content:center;flex-wrap:wrap}
+.tc-title .gk{font-size:1em}
+.tc-sub{margin:0;font-size:1.9cqw;font-style:italic;color:var(--ink)}
+.tc-place{margin:.3cqw 0 0;font-size:1.25cqw;letter-spacing:.04em;color:var(--muted)}
+.bigplay{position:absolute;left:50%;top:68.8%;transform:translate(-50%,-50%);display:flex;align-items:center;gap:.6em;padding:.75em 1.3em .75em 1.05em;border-radius:999px;border:0;background:var(--accent);color:var(--sky);font:600 max(14px,1.35cqw)/1 var(--font-ui);cursor:pointer;box-shadow:0 6px 24px rgba(0,0,0,.22)}
+.bigplay svg{width:1.1em;height:1.1em}
+.bigplay:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+.stage[data-mode="tall"] .bigplay{top:58.8%;font-size:max(14px,4.2cqw)}
+.stage[data-mode="tall"] .cap{left:3.4cqw;top:3.2cqw;width:93.2cqw}
+.stage[data-mode="tall"] .c-eyebrow{font-size:3.1cqw;margin-bottom:1cqw}
+.stage[data-mode="tall"] .c-main,.stage[data-mode="tall"] .c-q,.stage[data-mode="tall"] .c-term{font-size:5.1cqw}
+.stage[data-mode="tall"] .c-detail{font-size:3.85cqw;line-height:1.38;margin-top:1cqw}
+.stage[data-mode="tall"] .cite{left:3.4cqw;bottom:12.6cqw;max-width:93cqw;font-size:3.05cqw}
+.stage[data-mode="tall"] .legend{left:3.4cqw;right:3.4cqw;bottom:2.4cqw;display:grid;grid-template-columns:1fr 1fr;gap:1.6cqw 3cqw;font-size:3.05cqw}
+.stage[data-mode="tall"] .titlecard{top:12cqw;gap:1.8cqw;padding-inline:4cqw}
+.stage[data-mode="tall"] .tc-eyebrow{font-size:3.1cqw}
+.stage[data-mode="tall"] .tc-title{font-size:13.5cqw;flex-direction:column;gap:0}
+.stage[data-mode="tall"] .tc-sub{font-size:5.4cqw}
+.stage[data-mode="tall"] .tc-place{font-size:3.8cqw}
+
+/* ---------- SVG art ---------- */
+.st-bg,.pbg{fill:var(--sky)}
+.glow{fill:url(#gGlow)}
+.pframe{fill:none;stroke:var(--rule);stroke-width:1.5}
+.ptitle{font-family:var(--font-ui);font-weight:600;letter-spacing:.09em;fill:var(--muted)}
+.tplate{fill:var(--sky);fill-opacity:.9}
+.scalebar{stroke:var(--muted);stroke-width:2;fill:none}
+.scaletext{font-family:var(--font-ui);font-weight:500;fill:var(--muted)}
+.ground{fill:var(--stone)}
+.r3{stroke:var(--ink);stroke-width:1.6;stroke-dasharray:8 5;fill:none}
+.facade{fill:var(--facade);stroke:var(--ink);stroke-width:2;stroke-linejoin:round}
+.plank{stroke:var(--facade-line);stroke-width:1;opacity:.32;fill:none}
+.beam{stroke:var(--facade-line);stroke-width:4;opacity:.5;fill:none}
+.trim{fill:var(--wood);stroke:var(--ink);stroke-width:1.6;stroke-dasharray:7 4;stroke-linejoin:round}
+.interior{fill:url(#gInterior)}
+.ifloor{fill:var(--interior-2)}
+.leaf{fill:url(#pLeaf);stroke:var(--ink);stroke-width:1.6;stroke-dasharray:7 4;stroke-linejoin:round}
+.leafpanel{fill:none;stroke:var(--facade-line);stroke-width:1.3;opacity:.85}
+.leafshade{fill:var(--interior)}
+.ring{fill:none;stroke:var(--black);stroke-width:1.4}
+.deck{fill:url(#pDeck);stroke:var(--ink);stroke-width:1.5;stroke-dasharray:6 3.5;stroke-linejoin:round}
+.deck-out{fill:none;stroke:var(--ink);stroke-width:1.4;stroke-dasharray:6 4}
+.wheel{fill:var(--wood-light);stroke:var(--ink);stroke-width:1.4}
+.hub{fill:var(--ink)}
+.spoke{stroke:var(--ink);stroke-width:1.3}
+.wood-a{fill:var(--wood);stroke:var(--black);stroke-width:1.1;stroke-linejoin:round}
+.cloth{fill:var(--cloth);stroke:var(--black);stroke-width:1;stroke-linejoin:round}
+.wool{fill:var(--cloth);stroke:var(--black);stroke-width:1}
+.marble{fill:var(--marble);stroke:var(--black);stroke-width:1.1}
+.clay{fill:var(--clay);stroke:var(--black);stroke-width:1.1;stroke-linejoin:round}
+.clay-d{fill:var(--clay-dark);stroke:var(--black);stroke-width:1;stroke-linejoin:round}
+.skin{fill:var(--clay);stroke:var(--black);stroke-width:1;stroke-linejoin:round}
+.hair,.eye,.mouth,.shoe{fill:var(--black)}
+.det{fill:none;stroke:var(--black);stroke-width:.9;stroke-linecap:round;stroke-linejoin:round}
+.rope{fill:none;stroke:var(--black);stroke-width:2.2;stroke-linecap:round}
+.blade{fill:none;stroke:var(--marble);stroke-width:2.4;stroke-linecap:round}
+.blade-o{fill:none;stroke:var(--black);stroke-width:4;stroke-linecap:round}
+.blood{fill:var(--blood)}
+.blood-s{fill:none;stroke:var(--blood);stroke-width:2.4;stroke-linecap:round}
+.limb-o{fill:none;stroke:var(--black);stroke-linecap:round;stroke-linejoin:round}
+.limb-f{fill:none;stroke:var(--clay);stroke-linecap:round;stroke-linejoin:round}
+.cut{fill:var(--facade);stroke:var(--ink);stroke-width:1.8;stroke-linejoin:round}
+.cutgrain{stroke:var(--facade-line);stroke-width:1;opacity:.5;fill:none}
+.jamb{fill:var(--facade);fill-opacity:.55;stroke:var(--ink);stroke-width:1}
+.backstage{fill:var(--backstage)}
+.hand-o{fill:var(--hand);stroke:var(--ink);stroke-width:2.2;stroke-dasharray:5 3;stroke-linejoin:round}
+.hand-f{fill:var(--hand)}
+.ghost{fill:none;stroke:var(--accent-2);stroke-width:2.4;stroke-dasharray:.1 5.4;stroke-linecap:round;stroke-linejoin:round}
+.ghost-fill{fill:var(--accent-2)}
+.arrow{fill:none;stroke:var(--accent);stroke-width:3.2;stroke-linecap:round}
+.ah{fill:var(--accent)}
+.ah2{fill:var(--accent-2)}
+.dim{stroke:var(--ink);stroke-width:1.2;fill:none}
+.shadow{fill:var(--black)}
+.cutline{stroke:var(--accent);stroke-width:2.6;stroke-dasharray:12 7;fill:none}
+.talk,.cry{fill:none;stroke:var(--ink);stroke-width:1.8;stroke-linecap:round}
+.cardframe{fill:none;stroke:var(--paper);stroke-width:7}
+.cardline{fill:none;stroke:var(--ink);stroke-width:1.2}
+.dimov{fill:var(--interior)}
+.axis{stroke:var(--muted);stroke-width:1.5;fill:none}
+.axis-sure{stroke:var(--ink);stroke-width:3.4;fill:none;stroke-linecap:round}
+.tmark{fill:var(--ink)}
+.lbl text{font-family:var(--font-ui);font-weight:500;fill:var(--ink);paint-order:stroke fill;stroke:var(--sky);stroke-linejoin:round}
+.lbl.plated text{stroke:none}
+.lbl .sec{font-weight:400;fill:var(--muted);font-size:.84em}
+.lbl .tag{font-weight:600;fill:var(--muted)}
+.lbl .gk{font-family:var(--font-greek);font-style:italic;font-weight:400}
+.lbl.accent text{fill:var(--accent)}
+.lbl.alt text,.lbl.alt .sec{fill:var(--accent-2);font-style:italic}
+.lbl.alt .tag{fill:var(--accent-2)}
+.leader{fill:none;stroke:var(--ink);opacity:.6}
+.lbl.alt .leader{stroke:var(--accent-2)}
+.leaderdot{fill:var(--ink)}
+.lbl.alt .leaderdot{fill:var(--accent-2)}
+.plate{fill:var(--paper);fill-opacity:.94;stroke:var(--rule)}
+.imark circle{fill:var(--paper);stroke:var(--ink)}
+.imark text{font-family:var(--font-ui);font-weight:700;fill:var(--ink);text-anchor:middle;stroke:none}
+.sw-a{fill:var(--wood);stroke:var(--ink);stroke-width:1.6}
+.sw-i{fill:var(--facade);stroke:var(--ink);stroke-width:1.6}
+.sw-r{fill:url(#pDeckSw);stroke:var(--ink);stroke-width:1.6;stroke-dasharray:4 2.5}
+.sw-alt{fill:none;stroke:var(--accent-2);stroke-width:2;stroke-dasharray:.1 3.6;stroke-linecap:round}
+.sw-itext{font:700 9px var(--font-ui);fill:var(--ink)}
+
+/* ---------- controls ---------- */
+.controls{width:100%;max-width:var(--stage-w,1400px);display:flex;flex-direction:column;gap:6px}
+.scrub{position:relative;height:28px}
+.ticks{position:absolute;left:9px;right:9px;top:0;bottom:0;pointer-events:none}
+.ticks i{position:absolute;top:6px;width:2px;height:16px;margin-left:-1px;background:var(--rule);border-radius:1px}
+#scrub{-webkit-appearance:none;appearance:none;position:absolute;inset:0;width:100%;height:28px;margin:0;background:transparent;cursor:pointer}
+#scrub::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:linear-gradient(to right,var(--accent) 0 var(--pct,0%),var(--rule) var(--pct,0%) 100%)}
+#scrub::-moz-range-track{height:6px;border-radius:3px;background:var(--rule)}
+#scrub::-moz-range-progress{height:6px;border-radius:3px;background:var(--accent)}
+#scrub::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;margin-top:-6px;border-radius:50%;background:var(--accent);border:3px solid var(--sky);box-shadow:0 0 0 1px var(--accent)}
+#scrub::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--accent);border:3px solid var(--sky)}
+#scrub:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:38px;min-width:38px;padding:0 10px;border-radius:8px;border:1px solid var(--rule);background:var(--panel);color:var(--ink);font:600 14px var(--font-ui);cursor:pointer}
+.btn svg{width:16px;height:16px;fill:currentColor}
+.btn:hover{border-color:var(--muted)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--sky);padding:0 14px 0 12px;min-width:92px}
+.beatlabel{font-size:14px;font-weight:600;min-width:0;flex:1 1 auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.beatlabel span{color:var(--muted);font-weight:500}
+.time{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.help{margin:0;font-size:12px;color:var(--muted);width:100%;max-width:var(--stage-w,1400px)}
+kbd{font:600 11px var(--font-ui);border:1px solid var(--rule);border-bottom-width:2px;border-radius:4px;padding:0 4px;background:var(--panel);color:var(--ink)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+@media (max-width: 560px){.help{display:none}.masthead{gap:2px 12px}.app{padding-block:10px 14px;gap:8px}}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+
+<div class="app" id="app">
+  <header class="masthead">
+    <p class="kicker"><b>Theatre Animator</b> · Animation 1 of 2 · <span class="gk" style="text-transform:none;letter-spacing:0;font-size:1.15em">ekkyklēma</span></p>
+    <p class="mutenote">About 90 s · silent: the captions carry everything</p>
+  </header>
+
+  <figure class="stage" id="stage" data-mode="wide">
+    <svg id="svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="svgTitle">
+      <title id="svgTitle">Animated drawings of the ekkyklema at the Theatre of Dionysus</title>
+      <defs id="defs"></defs>
+      <rect id="stbg" class="st-bg" x="0" y="0" width="1600" height="900"/>
+      <rect id="glow" class="glow" x="0" y="0" width="1600" height="900"/>
+      <g id="panels"></g>
+      <g id="frames"></g>
+    </svg>
+
+    <div class="ov titlecard" id="titlecard">
+      <p class="tc-eyebrow">Theatre of Dionysus, late 5th c. BC</p>
+      <h1 class="tc-title"><span class="gk" data-gk>ekkyklēma</span><span class="gr">ἐκκύκλημα</span></h1>
+      <p class="tc-sub">“the roll-out”</p>
+    </div>
+    <div class="ov cap" id="cap"></div>
+    <div class="ov cite" id="cite" aria-hidden="true"></div>
+    <div class="ov legend" id="legend" aria-label="Evidence code">
+      <span class="lg"><svg viewBox="0 0 32 18" aria-hidden="true"><rect class="sw-a" x="1" y="1" width="30" height="16" rx="1"/></svg>Attested</span>
+      <span class="lg"><svg viewBox="0 0 32 18" aria-hidden="true"><rect class="sw-i" x="1" y="1" width="30" height="16" rx="1"/><text class="sw-itext" x="22" y="12.6">I</text></svg>Inferred</span>
+      <span class="lg"><svg viewBox="0 0 32 18" aria-hidden="true"><rect class="sw-r" x="1" y="1" width="30" height="16" rx="1"/></svg>Reconstruction</span>
+      <span class="lg"><svg viewBox="0 0 32 18" aria-hidden="true"><rect class="sw-alt" x="1" y="1" width="30" height="16" rx="1"/></svg>Alternative theory</span>
+    </div>
+    <button class="bigplay" id="bigplay" type="button" aria-label="Play the animation"><svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M4 2.5v11l9.5-5.5z"/></svg>Play</button>
+  </figure>
+
+  <div class="controls" id="controls">
+    <div class="scrub">
+      <div class="ticks" id="ticks"></div>
+      <input type="range" id="scrub" min="0" max="90" step="0.01" value="0" aria-label="Position in the animation">
+    </div>
+    <div class="row">
+      <button class="btn" id="prev" type="button" aria-label="Previous beat"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 2h2v12H3zM14 2.5v11L6 8z"/></svg></button>
+      <button class="btn primary" id="play" type="button" aria-label="Play"><svg viewBox="0 0 16 16" aria-hidden="true" id="playicon"><path d="M4 2.5v11l9.5-5.5z"/></svg><span id="playtext">Play</span></button>
+      <button class="btn" id="next" type="button" aria-label="Next beat"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M11 2h2v12h-2zM2 2.5v11L10 8z"/></svg></button>
+      <div class="beatlabel" id="beatlabel" aria-live="off">0 / 9 · The roll-out</div>
+      <div class="time" id="time">0:00 / 1:30</div>
+    </div>
+  </div>
+  <p class="help"><kbd>Space</kbd> play or pause · <kbd>←</kbd> <kbd>→</kbd> step between beats · drag the bar to scrub. Dashed = our reconstruction, dotted purple = a competing theory.</p>
+  <p class="sr" id="live" aria-live="polite"></p>
+</div>
+
+<script>
+(() => {
+'use strict';
+const NS = 'http://www.w3.org/2000/svg';
+const TOTAL = 90;
+const $ = id => document.getElementById(id);
+const clamp = (x, a = 0, b = 1) => x < a ? a : x > b ? b : x;
+const lerp = (a, b, u) => a + (b - a) * u;
+const E = {
+  io: u => u < .5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2,
+  sine: u => -(Math.cos(Math.PI * u) - 1) / 2,
+  lin: u => u,
+};
+const r2 = n => Math.round(n * 100) / 100;
+/* keyed value track: piecewise, eased between keys; pure in t */
+function track(t, keys, ease = E.io) {
+  if (t <= keys[0][0]) return keys[0][1];
+  for (let i = 1; i < keys.length; i++) {
+    if (t <= keys[i][0]) {
+      const [t0, v0] = keys[i - 1], [t1, v1] = keys[i];
+      return t1 === t0 ? v1 : lerp(v0, v1, ease((t - t0) / (t1 - t0)));
+    }
+  }
+  return keys[keys.length - 1][1];
+}
+/* visibility window: fully on in [a,b], fades over f outside it */
+function win(t, a, b, f = .35) {
+  if (t < a - f || t > b + f) return 0;
+  if (t < a) return E.sine((t - (a - f)) / f);
+  if (t > b) return 1 - E.sine((t - b) / f);
+  return 1;
+}
+function el(tag, attrs, parent) {
+  const n = document.createElementNS(NS, tag);
+  if (attrs) for (const k in attrs) n.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(n);
+  return n;
+}
+function set(n, attrs) { for (const k in attrs) n.setAttribute(k, attrs[k]); }
+/* GFS Didot has no precomposed Latin macrons; it does have the combining macron */
+const didot = s => s.replace(/[Ā-ſ]/g, ch => ch.normalize('NFD'));
+
+/* ---------------- beats, captions, citations ---------------- */
+const BEATS = [
+  { t0: 0,  name: 'The roll-out',        key: 0 },
+  { t0: 5,  name: 'The problem',         key: 11 },
+  { t0: 15, name: 'Behind the façade',   key: 27.1 },
+  { t0: 28, name: 'The doors open',      key: 35.2 },
+  { t0: 36, name: 'Rolling out',         key: 45.1 },
+  { t0: 46, name: 'The tableau',         key: 56.9 },
+  { t0: 58, name: 'Rolling back in',     key: 65.3 },
+  { t0: 66, name: 'What’s disputed',     key: 81.0 },
+  { t0: 82, name: 'Famous reveals',      key: 90 },
+];
+const beatEnd = i => i < BEATS.length - 1 ? BEATS[i + 1].t0 : TOTAL;
+
+/* line kinds: p = inline parts [tIn, text]; v = stacked variants [tIn, tOut, text] */
+const CAPS = [
+  { a: 5, b: 14.3, lines: [
+    { c: 'main', p: [[5.0, 'Greek plays happen outdoors. '], [6.7, 'Violence happens *inside*, offstage.']] },
+    { c: 'q', p: [[10.2, 'How do you show its aftermath?']] } ] },
+  { a: 15, b: 27.3, lines: [
+    { c: 'main', p: [[15.0, 'A cut through the central door.']] },
+    { c: 'detail', p: [[19.6, 'Backstage, the platform waits with its tableau set. Two stagehands crouch behind it.']] } ] },
+  { a: 28, b: 35.3, lines: [
+    { c: 'main', p: [[28.0, 'The doors open…']] },
+    { c: 'detail', p: [[29.0, '_dioigō_ “I open”, Sophocles, *Ajax* 346']] } ] },
+  { a: 36, b: 45.3, lines: [
+    { c: 'term', p: [[36.0, '_ekkyklein_ “to roll out”']] },
+    { c: 'detail', p: [[36.9, '*Acharnians* 408: _ekkyklēthēti_ “get rolled out!”']] } ] },
+  { a: 46, b: 57.3, lines: [
+    { c: 'main', p: [[46.0, 'An interior shown outside.']] },
+    { c: 'detail', p: [[47.3, 'In *Acharnians* (425 BC) Euripides, rolled out, has “no time to come down” (409).']] } ] },
+  { a: 58, b: 65.3, lines: [
+    { c: 'term', p: [[58.0, '_eiskyklein_ “to roll in”']] },
+    { c: 'detail', p: [[58.8, '*Thesmophoriazusae* 265: “someone roll me back in, quickly!” Pollux (4.128) calls the device for this the _eiskyklēma_.']] } ] },
+  { a: 66, b: 81.25, lines: [
+    { c: 'eyebrow', p: [[66.0, 'What’s disputed']] },
+    { c: 'main', v: [[66.0, 74.0, 'Rolled or revolved?'], [74.0, 78.0, 'How big?'], [78.0, 99, 'Since Aeschylus, or later?']] },
+    { c: 'detail', v: [
+      [66.4, 70.0, 'A turntable in the doorway? The idea rests on the scholia’s verb _strephō_, “turn”. No ruin shows a pivot, and it is now a minority view.'],
+      [70.0, 74.0, 'Or a windlass? Casanova reads the same verb as a crank-turned windlass that pulls the trolley out. Argued, but unproven.'],
+      [74.0, 78.0, 'No 5th-century door survives, because the skene was wooden. Estimates run from about 2.5 × 1.3 m (Dearden) to about 3 m wide (Haigh).'],
+      [78.0, 99, 'Certain by 425 BC, when *Acharnians* parodies it as familiar. For the *Oresteia* (458 BC) scholars are divided.']] } ] },
+  { a: 82, b: 87.25, lines: [
+    { c: 'main', p: [[82.0, 'Reveals most scholars accept']] },
+    { c: 'detail', p: [[82.6, 'The usual use: the result of an indoor event, usually bodies or a disturbed hero, shown as a tableau.']] } ] },
+  { a: 88, b: 99, lines: [
+    { c: 'main', p: [[88.0, 'Next: Sophocles’ *Ajax*']] },
+    { c: 'detail', p: [[88.4, 'Animation 2 looks closely at the *Ajax* tableau.']] } ] },
+];
+const CITES = [
+  [5.0, 14.3, 'cf. Pollux, *Onom.* 4.128'],
+  [15.0, 27.3, 'Pollux, *Onom.* 4.128 · scholion on Ar. *Ach.* 408'],
+  [28.0, 35.3, 'Soph. *Aj.* 346'],
+  [36.0, 45.3, 'Ar. *Ach.* 408'],
+  [46.0, 57.3, 'Ar. *Ach.* 409 · *Ach.* 399 · *Thesm.* 261 · Pollux 4.128'],
+  [58.0, 65.3, 'Ar. *Thesm.* 265 · Pollux, *Onom.* 4.128'],
+  [66.0, 69.35, 'Exon 1900 · Flickinger 1918, pp. 284–289'],
+  [70.0, 73.35, 'Casanova, *Prometheus* 43 (2017) 3–42'],
+  [74.0, 77.35, 'Dearden 1976, pp. 50–54 · Haigh 1907, pp. 201–207'],
+  [78.0, 81.35, 'Ar. *Ach.* 408 · *Thesm.* 96, 265 · Taplin 1977 · Hammond 1972'],
+  [82.0, 99, 'Eur. *Her.* 1028 · Eur. *Hipp.* 808 · Soph. *Aj.* 346'],
+];
+
+/* ---------------- layout modes and camera views ---------------- */
+const MODES = {
+  wide: { W: 1600, H: 900, L: 19, PT: 14, SB: 13, views: {
+    F: { title: { f: [40, 150, 1520, 640], c: [0, -215], s: 1.25 },
+         full:  { f: [40, 150, 1520, 640], c: [0, -125], s: 1.5 },
+         cut:   { f: [40, 150, 1520, 640], c: [0, -125], s: 1.8 },
+         split: { f: [810, 150, 760, 640], c: [0, -135], s: 1.4 },
+         push:  { f: [40, 150, 1520, 640], c: [0, -84], s: 1.8 } },
+    S: { slit:  { f: [799, 150, 2, 640], c: [-9, -125], s: 1.5 },
+         full:  { f: [40, 150, 1520, 640], c: [60, -125], s: 1.5 },
+         split: { f: [30, 150, 760, 640], c: [-52, -130], s: 1.3 },
+         s7:    { f: [30, 176, 760, 498], c: [-52, -138], s: 1.15 } },
+    P: { p7: { f: [810, 176, 760, 498], c: [10, -30], s: 1.3 } },
+    T: { t7: { f: [30, 684, 1540, 104], c: [500, 44], s: 1.5 } },
+  } },
+  tall: { W: 900, H: 1600, L: 28, PT: 21, SB: 20, views: {
+    F: { title: { f: [20, 370, 860, 1010], c: [0, -150], s: 1.2 },
+         full:  { f: [20, 370, 860, 1010], c: [0, -135], s: 1.36 },
+         cut:   { f: [20, 370, 860, 1010], c: [0, -135], s: 1.6 },
+         split: { f: [20, 885, 860, 495], c: [0, -128], s: 1.12 },
+         push:  { f: [20, 370, 860, 1010], c: [0, -110], s: 1.42 } },
+    S: { slit:  { f: [449, 370, 2, 1010], c: [-9, -135], s: 1.36 },
+         full:  { f: [20, 370, 860, 1010], c: [20, -130], s: 1.45 },
+         split: { f: [20, 370, 860, 500], c: [60, -132], s: 1.08 },
+         s7:    { f: [20, 370, 860, 450], c: [-60, -140], s: 1.25 } },
+    P: { p7: { f: [20, 830, 860, 400], c: [0, -30], s: 1.15 } },
+    T: { t7: { f: [20, 1240, 860, 140], c: [500, 46], s: 0.86 } },
+  } },
+};
+/* camera keys per panel: [time, view, opacity] */
+const CAM = {
+  F: [[0, 'title'], [5.0, 'title'], [6.6, 'full'], [18.0, 'full'], [20.6, 'cut', 0], [28.3, 'split', 0], [29.7, 'split'], [46.0, 'split'], [47.4, 'full'],
+      [58.0, 'full'], [59.4, 'split'], [66.0, 'split'], [66.9, 'split', 0], [82.1, 'full', 0], [82.9, 'full'], [87.8, 'full'], [90, 'push']],
+  S: [[17.95, 'slit', 0], [18.0, 'slit'], [20.8, 'full'], [28.0, 'full'], [29.7, 'split'], [46.0, 'split'], [46.6, 'split', 0], [58.4, 'split', 0], [59.3, 'split'],
+      [66.0, 'split'], [67.4, 's7'], [82.0, 's7'], [82.7, 's7', 0]],
+  P: [[66.2, 'p7', 0], [67.4, 'p7'], [82.0, 'p7'], [82.7, 'p7', 0]],
+  T: [[78.0, 't7', 0], [78.7, 't7'], [82.0, 't7'], [82.7, 't7', 0]],
+};
+const PTITLES = {
+  wide: { F: 'Front elevation · what the audience sees', S: 'Side section · cut through the central door', P: 'Plan · from above', T: 'First use' },
+  tall: { F: 'Front · audience view', S: 'Side section', P: 'Plan · from above', T: '' },
+};
+function cam(P, t, mode) {
+  const keys = CAM[P], V = MODES[mode].views[P];
+  let a = keys[0], b = keys[0], u = 0;
+  if (t >= keys[keys.length - 1][0]) a = b = keys[keys.length - 1];
+  else if (t > keys[0][0]) {
+    for (let i = 1; i < keys.length; i++) if (t < keys[i][0]) { a = keys[i - 1]; b = keys[i]; u = E.io((t - a[0]) / (b[0] - a[0])); break; }
+  }
+  const va = V[a[1]], vb = V[b[1]];
+  return {
+    f: va.f.map((x, j) => lerp(x, vb.f[j], u)),
+    cx: lerp(va.c[0], vb.c[0], u), cy: lerp(va.c[1], vb.c[1], u),
+    s: lerp(va.s, vb.s, u),
+    op: lerp(a[2] ?? 1, b[2] ?? 1, u),
+  };
+}
+
+/* ---------------- drawing vocabulary ---------------- */
+/* masked head, profile facing right when dir=1; slightly oversized, open mouth */
+function maskHead(x, y, r, dir = 1, tilt = 0) {
+  const k = r / 10;
+  return `<g transform="translate(${x},${y}) rotate(${tilt}) scale(${r2(dir * k)},${r2(k)})">
+    <path class="skin" d="M-4,4C-5,-3-2,-9,3,-10.5C6,-11,8.6,-9.5,9,-7L9.4,-5.6L11.6,-1.6L9.4,-.9L9.6,.6L7.6,2.2L9.4,3.8C9.6,6.8,8,9.8,4.2,10.2C.8,10.5-2.5,8.5-4,4Z"/>
+    <ellipse class="mouth" cx="8.5" cy="2.2" rx="1.35" ry="1.5"/>
+    <path class="hair" d="M-4.6,4.6C-9.5,2-11.5-6-7.5-11C-4-15.2,4-15.6,8.6-10.4C6-11.6,3-11.6,.6-10.6C-2.6-9.2-4-6-3.6-2.4C-3.4,.4-3.2,2.6-4.6,4.6Z"/>
+    <path class="eye" d="M3.4-5.3Q5.2-6.7,7-5.3Q5.2-4.2,3.4-5.3Z"/>
+    <path class="det" d="M2.8-7.7Q5.6-9.1,8.4-7.5"/>
+  </g>`;
+}
+const limb = (d, w, id = '') => `<path ${id ? `id="${id}-o"` : ''} class="limb-o" stroke-width="${w + 2}" d="${d}"/><path ${id ? `id="${id}-f"` : ''} class="limb-f" stroke-width="${w}" d="${d}"/>`;
+const deckFront = () => `<rect class="wheel" x="-64" y="-15" width="6" height="15" rx="1.5"/><rect class="wheel" x="58" y="-15" width="6" height="15" rx="1.5"/><rect class="deck" x="-72" y="-18" width="144" height="10"/>`;
+
+/* R5 demo tableau, front view: masked figure reclining on a couch (feet up), stool with a garment */
+function frontTableau() {
+  return `
+  <path class="wood-a" d="M-54,-45C-59,-49-60,-58-54,-62C-52,-59-51,-53-47,-50Z"/>
+  <rect class="wood-a" x="-52" y="-40" width="5" height="22"/><rect class="wood-a" x="41" y="-40" width="5" height="22"/>
+  <rect class="wood-a" x="-55" y="-45" width="104" height="6" rx="1"/>
+  <path class="cloth" d="M-53,-51Q-53,-45-47,-45H44Q49,-45,49,-49Q49,-51,44,-51Z"/>
+  <ellipse class="cloth" cx="-45" cy="-55" rx="9" ry="5"/>
+  ${limb('M-39,-72L-47,-60L-40,-56', 5)}
+  <path class="clay" d="M-36,-79C-40,-78-43,-73-42,-65C-41,-58-38,-54-31,-51L-8,-53C-2,-55,3,-61,7,-64C12,-61,22,-55,29,-51L38,-51C40,-52,40,-54,37,-55L33,-56C26,-62,18,-70,12,-73C7,-74,2,-69-4,-62C-8,-59-13,-59-17,-62C-20,-66-22,-72-25,-77C-27,-79-32,-80-36,-79Z"/>
+  <path class="det" d="M-6,-58C2,-60,8,-66,11,-70M-22,-56C-14,-55-8,-55-2,-57M14,-60C18,-58,24,-55,28,-53M-38,-70C-32,-66-26,-63-19,-63"/>
+  <path id="F-tab" class="wood-a" d="M-13,-75L-5,-73L-6,-67L-14,-69Z"/>
+  ${limb('M-28,-74L-20,-64L-10,-69', 4.4, 'F-farm')}
+  ${maskHead(-32, -88, 9.5, 1)}
+  <rect class="wood-a" x="51" y="-31" width="18" height="4" rx="1"/>
+  <path class="wood-a" d="M53,-27h3v9h-3zM64,-27h3v9h-3z"/>
+  <path class="cloth" d="M52,-31Q53,-37,59,-36Q66,-37,68,-31Z"/>`;
+}
+/* the same tableau seen end-on in the side section (platform-local: x 0 = back edge) */
+function sideTableau() {
+  return `
+  <rect class="wood-a" x="28" y="-40" width="4" height="22"/><rect class="wood-a" x="64" y="-40" width="4" height="22"/>
+  <rect class="wood-a" x="26" y="-45" width="44" height="6" rx="1"/>
+  <rect class="cloth" x="25" y="-51" width="46" height="6" rx="3"/>
+  <path class="clay" d="M34,-51C34,-66,37,-77,45,-79C52,-80,57,-75,57,-67L56,-51Z"/>
+  <path class="clay" d="M29,-51C30,-59,38,-63,48,-63C57,-63,64,-58,67,-51Z"/>
+  <path class="det" d="M36,-55C42,-58,50,-59,58,-56M40,-71C44,-68,50,-67,55,-69"/>
+  ${maskHead(46, -88, 9.5, 1)}
+  <rect class="wood-a" x="75" y="-31" width="16" height="4" rx="1"/>
+  <path class="wood-a" d="M76,-27h3v9h-3zM87,-27h3v9h-3z"/>
+  <path class="cloth" d="M76,-31Q77,-36,83,-35Q89,-36,90,-31Z"/>`;
+}
+const corpse = (x, len, dir, dy = 0) => `<g transform="translate(${x},${dy}) scale(${dir},1)">
+  <path class="clay" d="M3,-18C3,-23.5,8,-25.5,${len * .45},-24.6C${len * .75},-24,${len},-22.6,${len},-18Z"/>
+  <path class="det" d="M${len * .3},-20.5C${len * .5},-22,${len * .7},-21.8,${len * .9},-20.2"/>
+  <circle class="skin" cx="-.5" cy="-22.4" r="4.6"/><path class="hair" d="M-5.1,-22.4A4.6,4.6 0 0 1 3.6,-24.4L-.5,-22.4Z"/></g>`;
+const sheep = (x, dir) => `<g transform="translate(${x},-18) scale(${dir},1)">
+  <path class="det" stroke-width="1.6" d="M-7,-3L-11,3M0,-2L-1,4M7,-3L11,2"/>
+  <ellipse class="wool" cx="0" cy="-7" rx="15" ry="7"/><ellipse class="wool" cx="15.5" cy="-4.5" rx="5.2" ry="3.4"/>
+  <circle class="eye" cx="18" cy="-5.5" r=".9"/></g>`;
+function thumbHeracles() {
+  return `
+  ${corpse(-60, 22, 1, -3)}${corpse(-38, 21, 1)}
+  ${corpse(66, 22, -1, -3)}${corpse(46, 20, 1)}
+  <rect class="marble" x="-10" y="-150" width="20" height="128"/><rect class="marble" x="-14" y="-158" width="28" height="8"/><rect class="marble" x="-13" y="-24" width="26" height="6"/>
+  <path class="det" d="M-4,-148V-26M4,-148V-26"/>
+  <path class="clay" d="M-4,-76C-7,-62-7,-40-4,-20L36,-20C39,-20,39,-23,36,-24L31,-26C33,-32,34,-38,31,-42C25,-46,17,-44,11,-42C11,-52,13,-63,11,-71C8,-77,0,-79-4,-76Z"/>
+  <path class="det" d="M6,-30C14,-32,22,-36,29,-40M0,-58C3,-54,6,-50,9,-46"/>
+  <path class="rope" d="M-11,-64L13,-66M-11,-50L12,-52"/>
+  ${maskHead(9, -85, 9.5, 1, 28)}`;
+}
+function thumbHippolytus() {
+  return `
+  <rect class="wood-a" x="-57" y="-38" width="5" height="20"/><rect class="wood-a" x="52" y="-38" width="5" height="20"/>
+  <rect class="wood-a" x="-62" y="-43" width="124" height="6" rx="1"/>
+  <path class="cloth" d="M-61,-43C-61,-47-57,-49-51,-49H57C61,-49,62,-46,61,-43Z"/>
+  <ellipse class="cloth" cx="-50" cy="-52" rx="9" ry="4.5"/>
+  <path class="clay" d="M-42,-49C-40,-58-24,-60-8,-57C8,-55,22,-57,34,-55C44,-54,51,-52,54,-49Z"/>
+  <path class="det" d="M-30,-52C-18,-55-6,-54,6,-53M10,-53C22,-55,34,-54,46,-51"/>
+  ${maskHead(-49, -57, 8, 1, -90)}`;
+}
+function thumbAjax() {
+  return `
+  ${sheep(-56, 1)}${sheep(56, -1)}
+  <ellipse class="blood" cx="-52" cy="-18.4" rx="9" ry="1.5"/><ellipse class="blood" cx="54" cy="-18.4" rx="7" ry="1.3"/>
+  <g transform="translate(-27,-25)"><ellipse class="wool" cx="0" cy="0" rx="7" ry="5"/><path class="det" stroke-width="1.8" d="M-3,-3C-8,-8-12,-2-8,1C-6,3-3,1-4,-1"/><circle class="eye" cx="3" cy="-1" r=".9"/></g>
+  <path class="clay" d="M-14,-74C-17,-60-16,-40-12,-20L26,-20C29,-20,29,-23,26,-24L21,-26C23,-32,24,-38,21,-42C15,-46,7,-44,1,-42C1,-52,3,-62,1,-70C-2,-76-10,-78-14,-74Z"/>
+  <path class="det" d="M-6,-30C2,-32,10,-36,18,-40"/>
+  <path class="blade-o" d="M19,-47L35,-21"/><path class="blade" d="M19,-47L35,-21"/><path class="blood-s" d="M31,-27.5L35,-21"/>
+  <path class="det" stroke-width="2" d="M15,-45L23,-50"/>
+  ${limb('M-2,-66L8,-53L18,-47', 4.6)}
+  ${maskHead(0, -83, 9.5, 1, 34)}`;
+}
+
+/* ---------------- build scene ---------------- */
+const svg = $('svg'), defs = $('defs'), panelsG = $('panels'), framesG = $('frames');
+defs.innerHTML = `
+  <linearGradient id="gInterior" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--interior)"/><stop offset="1" stop-color="var(--interior-2)"/></linearGradient>
+  <radialGradient id="gGlow" cx=".18" cy="-.05" r=".85"><stop offset="0" stop-color="var(--glow)" stop-opacity=".95"/><stop offset=".6" stop-color="var(--glow)" stop-opacity=".18"/><stop offset="1" stop-color="var(--glow)" stop-opacity="0"/></radialGradient>
+  <pattern id="pDeck" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="7" height="7" fill="var(--wood-light)"/><line x1="0" y1="0" x2="0" y2="7" stroke="var(--wood)" stroke-width="1.8"/></pattern>
+  <pattern id="pDeckSw" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="5" height="5" fill="var(--wood-light)"/><line x1="0" y1="0" x2="0" y2="5" stroke="var(--wood)" stroke-width="1.4"/></pattern>
+  <pattern id="pLeaf" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="9" height="9" fill="var(--leaf)"/><line x1="0" y1="0" x2="0" y2="9" stroke="var(--facade-line)" stroke-width="1.6" stroke-opacity=".55"/></pattern>
+  <linearGradient id="gFadeL" gradientUnits="userSpaceOnUse" x1="-350" y1="0" x2="-215" y2="0"><stop offset="0" stop-color="#000"/><stop offset="1" stop-color="#fff"/></linearGradient>
+  <mask id="mFadeL" maskUnits="userSpaceOnUse" x="-600" y="-600" width="1400" height="800"><rect x="-600" y="-600" width="1400" height="800" fill="url(#gFadeL)"/></mask>
+  <linearGradient id="gFadeTB" gradientUnits="userSpaceOnUse" x1="0" y1="-250" x2="0" y2="190"><stop offset="0" stop-color="#000"/><stop offset=".2" stop-color="#fff"/><stop offset=".82" stop-color="#fff"/><stop offset="1" stop-color="#000"/></linearGradient>
+  <mask id="mFadeTB" maskUnits="userSpaceOnUse" x="-600" y="-300" width="1200" height="600"><rect x="-600" y="-300" width="1200" height="600" fill="url(#gFadeTB)"/></mask>
+  <marker id="ahA" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="3.4" markerHeight="3.4" orient="auto-start-reverse"><path class="ah" d="M0,0L10,5L0,10z"/></marker>
+  <marker id="ahG" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path class="ah2" d="M0,0L10,5L0,10z"/></marker>
+  <clipPath id="clipFplat" clipPathUnits="userSpaceOnUse"><rect id="clipFplatR" x="-84" y="-260" width="168" height="270"/></clipPath>`;
+
+const panels = {};
+for (const P of ['F', 'S', 'P', 'T']) {
+  const cp = el('clipPath', { id: 'clip' + P }, defs);
+  const cr = el('rect', {}, cp);
+  const root = el('g', { 'clip-path': `url(#clip${P})` }, panelsG);
+  const bg = el('rect', { class: 'pbg' }, root);
+  const world = el('g', {}, root);
+  const frame = el('rect', { class: 'pframe', rx: 6 }, framesG);
+  const tplate = el('rect', { class: 'tplate' }, framesG);
+  const title = el('text', { class: 'ptitle' }, framesG);
+  const sbar = el('path', { class: 'scalebar' }, framesG);
+  const stext = el('text', { class: 'scaletext', 'text-anchor': 'end' }, framesG);
+  stext.textContent = '1 m';
+  panels[P] = { cr, root, bg, world, frame, tplate, title, sbar, stext, tw: 0, twKey: '' };
+}
+panelsG.appendChild(panels.S.root); /* S above F so its reveal can cover the front view */
+panelsG.appendChild(panels.P.root); panelsG.appendChild(panels.T.root);
+
+/* ---- F: front elevation (x = 0 at door centre, y = 0 at ground; 60 units = 1 m) ---- */
+(function buildF() {
+  let planks = '';
+  for (let x = -336; x <= 336; x += 24) if (Math.abs(x) > 100) planks += `M${x},-296V-2`;
+  panels.F.world.innerHTML = `
+  <rect class="ground" x="-900" y="0" width="1800" height="46"/>
+  <line class="r3" x1="-900" y1="0" x2="900" y2="0"/>
+  <ellipse id="F-shadow" class="shadow" cx="0" cy="3" rx="82" ry="4.5" opacity="0"/>
+  <rect class="interior" x="-84" y="-192" width="168" height="192"/>
+  <rect class="ifloor" x="-84" y="-14" width="168" height="14"/>
+  <rect class="facade" x="-368" y="-310" width="736" height="12" rx="1"/>
+  <path class="facade" d="M-360,-298H360V0H96V-204H-96V0H-360Z"/>
+  <path class="plank" d="${planks}"/>
+  <path class="beam" d="M-358,-270H358M-358,-34H-98M98,-34H358M-240,-268V-36M-120,-268V-36M120,-268V-36M240,-268V-36"/>
+  <path class="trim" d="M-96,0V-204H96V0H84V-192H-84V0Z"/>
+  <g id="F-leaves">
+    <path class="leaf" id="F-lL"/><path class="leafshade" id="F-lLs"/><path class="leafpanel" id="F-lLp"/><circle class="ring" id="F-lLr" r="3"/>
+    <path class="leaf" id="F-lR"/><path class="leafshade" id="F-lRs"/><path class="leafpanel" id="F-lRp"/><circle class="ring" id="F-lRr" r="3"/>
+  </g>
+  <g clip-path="url(#clipFplat)"><g id="F-plat">${deckFront()}${frontTableau()}<rect id="F-dim" class="dimov" x="-86" y="-112" width="172" height="112"/></g></g>
+  <g id="F-cards"></g>
+  <g id="F-actor" opacity="0"><ellipse class="shadow" cx="0" cy="2" rx="17" ry="3" opacity=".18"/><g id="F-actor-body">
+    <path class="clay" d="M-7,-85C-12,-83-13,-72-13,-58L-16,-3C-6,1,6,1,16,-3L12,-56C13,-70,12,-82,8,-85Z"/>
+    <path class="det" d="M-6,-58L-8,-6M0,-55L0,-4M6,-57L8,-6M-15,-7Q-10,-3-5,-7Q0,-3,5,-7Q10,-3,15,-7"/>
+    <path class="clay-d" d="M-9,-84L-3,-86L13,-52L12,-43Z"/>
+    <ellipse class="shoe" cx="-6" cy="-1.2" rx="4.5" ry="1.8"/><ellipse class="shoe" cx="7" cy="-1.2" rx="4.5" ry="1.8"/>
+    ${limb('M7,-80L12,-66L12,-54', 4.6, 'F-aarm')}
+    ${maskHead(2, -96, 9.5, 1)}
+    <path id="F-atalk" class="talk" opacity="0" d="M16,-100q3,3,0,6M20,-102q5,5,0,10M24,-104q7,7,0,14"/>
+  </g></g>
+  <path id="F-ftalk" class="talk" opacity="0" d="M-19,-92q3,3,0,6M-15,-94q5,5,0,10M-11,-96q7,7,0,14"/>
+  <g id="F-cry" opacity="0"><path class="cry" d="M-104,-170q-10,22,0,44M-116,-178q-14,30,0,60M-128,-186q-18,38,0,76M104,-170q10,22,0,44M116,-178q14,30,0,60M128,-186q18,38,0,76"/></g>
+  <line id="F-cut" class="cutline" x1="0" y1="-336" x2="0" y2="-336"/>
+  <g id="F-dimdoor" opacity="0"><path class="dim" d="M-84,-209V-219M84,-209V-219M-84,-214H84"/></g>
+  <g id="F-labels"></g>`;
+})();
+/* thumbnails for beat 8, each a doorway-sized card */
+const CARDS = [
+  { id: 'her', art: thumbHeracles(), inA: 82.6, mv: 84.4, slot: [-228, -58] },
+  { id: 'hip', art: thumbHippolytus(), inA: 85.1, mv: 86.7, slot: [228, -58] },
+  { id: 'aj', art: thumbAjax(), inA: 87.4, mv: null, slot: null },
+];
+$('F-cards').innerHTML = CARDS.map(c => `<g id="card-${c.id}" opacity="0">
+  <rect class="interior" x="-84" y="-192" width="168" height="192"/><rect class="ifloor" x="-84" y="-14" width="168" height="14"/>
+  ${deckFront()}${c.art}
+  <rect class="dimov" id="card-${c.id}-dim" x="-84" y="-192" width="168" height="192"/>
+  <g id="card-${c.id}-frame" opacity="0"><rect class="cardframe" x="-87" y="-195" width="174" height="198"/><rect class="cardline" x="-90.5" y="-198.5" width="181" height="205"/></g>
+</g>`).join('');
+
+/* ---- S: side section (x = 0 at façade outer face, + toward audience; y = 0 ground) ---- */
+/* stagehand: union of capsules; the dashed [R] outline is drawn, then the fills cover its inner half */
+const STAGEHAND = id => `<g id="${id}"><path class="hand-o" id="${id}-o"/><path class="hand-f" id="${id}-f"/></g>`;
+(function buildS() {
+  let grain = '';
+  for (let y = -292; y <= -200; y += 9) grain += `M-15,${y}H-3`;
+  panels.S.world.innerHTML = `
+  <rect class="backstage" x="-360" y="-284" width="342" height="284" mask="url(#mFadeL)"/>
+  <rect class="jamb" x="-18" y="-192" width="18" height="192"/>
+  <rect class="leaf" id="S-leaf" x="-17" y="-190" width="5" height="188" fill-opacity=".62"/>
+  <rect class="ground" x="-360" y="0" width="900" height="46" mask="url(#mFadeL)"/>
+  <line class="r3" x1="-360" y1="0" x2="540" y2="0" mask="url(#mFadeL)"/>
+  <rect id="S-gplat-out" class="deck-out" x="-22" y="-18" width="96" height="9" opacity="0"/>
+  ${STAGEHAND('hB')}
+  <g id="S-plat">
+    <g id="S-w1"><circle class="wheel" r="7"/><line class="spoke" x1="0" y1="0" x2="0" y2="-5.6"/><circle class="hub" r="1.6"/></g>
+    <g id="S-w2"><circle class="wheel" r="7"/><line class="spoke" x1="0" y1="0" x2="0" y2="-5.6"/><circle class="hub" r="1.6"/></g>
+    <rect class="deck" x="0" y="-18" width="96" height="9"/>
+    ${sideTableau()}
+  </g>
+  ${STAGEHAND('hA')}
+  <rect class="cut" x="-360" y="-300" width="360" height="17" mask="url(#mFadeL)"/>
+  <rect class="cut" x="-18" y="-300" width="18" height="108"/>
+  <path class="cutgrain" d="${grain}"/>
+  <path id="S-push" class="arrow" marker-end="url(#ahA)" d="M0,0" opacity="0"/>
+  <g id="S-dim" opacity="0"><path class="dim" d="M-34,50V62M74,50V62M-34,56H74"/></g>
+  <g id="S-ghost" opacity="0">
+    <path class="ghost" d="M-316,0L-300,-24L-284,0"/>
+    <circle class="ghost" cx="-300" cy="-24" r="14"/>
+    <path class="ghost" id="S-crank" d="M-300,-24L-284,-24"/>
+    <circle class="ghost" cx="116" cy="-8" r="6"/>
+    <path class="ghost" id="S-rope" d="M0,0"/>
+    <rect class="ghost" id="S-gplat" x="-130" y="-18" width="96" height="9"/>
+  </g>
+  <g id="S-labels"></g>`;
+})();
+
+/* ---- P: plan (x = 0 door centre; y = 0 façade outer face, + toward audience) ---- */
+(function buildP() {
+  panels.P.world.innerHTML = `
+  <rect class="backstage" x="-400" y="-250" width="800" height="232" mask="url(#mFadeTB)"/>
+  <rect class="ground" x="-400" y="0" width="800" height="190" mask="url(#mFadeTB)"/>
+  <rect class="facade" x="-372" y="-18" width="288" height="18"/><rect class="facade" x="84" y="-18" width="288" height="18"/>
+  <path class="dim" stroke-dasharray="4 4" d="M0,-14A84,84 0 0 0 -84,-98M0,-14A84,84 0 0 1 84,-98"/>
+  <rect class="leaf" x="-84" y="-98" width="5" height="84"/><rect class="leaf" x="79" y="-98" width="5" height="84"/>
+  <rect id="P-out" class="deck-out" x="-72" y="-22" width="144" height="96" opacity=".5"/>
+  <rect class="deck" x="-72" y="-130" width="144" height="96"/>
+  <rect class="wood-a" x="-52" y="-103" width="100" height="42" rx="2"/><rect class="cloth" x="-49" y="-100" width="94" height="36" rx="3"/>
+  <rect class="wood-a" x="51" y="-56" width="18" height="16" rx="1"/>
+  <path class="arrow" marker-end="url(#ahA)" d="M-112,-112V44"/>
+  <g id="P-turn" opacity="0">
+    <circle class="ghost" cx="0" cy="-9" r="84"/>
+    <g id="P-turnrot"><path class="ghost" d="M-84,-9A84,84 0 0 1 84,-9Z"/><rect class="ghost" x="-36" y="-62" width="72" height="30"/></g>
+    <path class="ghost" marker-end="url(#ahG)" d="M92.1,24.5A98,98 0 0 1 -92.1,24.5"/>
+  </g>
+  <g id="P-size" opacity="0">
+    <rect class="ghost" x="-76.5" y="-13" width="153" height="78"/>
+    <path class="ghost" d="M-90,106H90M-90,98V114M90,98V114"/>
+  </g>
+  <g id="P-labels"></g>`;
+})();
+
+/* ---- T: timeline strip ---- */
+const TX = yr => 40 + (460 - yr) * 920 / 55;
+(function buildT() {
+  let ticks = '';
+  for (let y = 460; y >= 410; y -= 10) ticks += `M${r2(TX(y))},39V49`;
+  panels.T.world.innerHTML = `
+  <path class="axis" d="M30,44H970${ticks}"/>
+  <path class="ghost" d="M${r2(TX(458))},44H${r2(TX(425))}"/>
+  <path class="axis-sure" d="M${r2(TX(425))},44H966"/>
+  <circle class="ghost" cx="${r2(TX(458))}" cy="44" r="6.5"/>
+  <circle class="tmark" cx="${r2(TX(425))}" cy="44" r="6.5"/><circle class="tmark" cx="${r2(TX(411))}" cy="44" r="6.5"/>
+  <g id="T-labels"></g>`;
+})();
+
+/* ---------------- labels ---------------- */
+/* line markup: *italic*  _translit_ (Didot italic)  {R1} evidence tag; leading ^ = secondary line */
+const LABELS = [
+  // F, beats 0–2
+  { id: 'f-imark', p: 'F', imark: 1, at: [334, -282], on: [-1, 17.6], tall: { at: [292, -282] } },
+  { id: 'f-facade', p: 'F', at: [-342, -258], a: 'start', plate: 1, on: [6.3, 14.3], lines: ['the façade stands for a house', '^skene: a wooden stage building {I}'],
+    tall: { at: [-300, -372], plate: 0 } },
+  { id: 'f-cry', p: 'F', at: [0, -228], a: 'middle', plate: 1, on: [8.2, 11.6], lines: ['*a cry from inside*'] },
+  { id: 'f-cut', p: 'F', cls: 'accent', at: [12, -314], a: 'start', on: [15.7, 18.4], lines: ['cut through the central door'] },
+  // F, beat 3–4
+  { id: 'f-door', p: 'F', at: [0, -228], a: 'middle', plate: 1, on: [30.2, 35.6], lines: ['central double door, ~2.8 m {R2}'] },
+  { id: 'f-hidden', p: 'F', at: [-258, -252], a: 'start', plate: 1, on: [38.4, 45.6], to: [-90, -60], lines: ['stagehands stay hidden', '^behind the door frame {R4}'] },
+  { id: 'f-slide', p: 'F', at: [0, 72], a: 'middle', on: [38.8, 45.6], lines: ['the tableau slides into view'] },
+  // F, beat 5
+  { id: 'f-stays', p: 'F', at: [-342, -256], a: 'start', plate: 1, on: [49.2, 57.6], to: [-40, -100], lines: ['the figure stays on the platform', '^“no time to come down”, *Ach.* 409 {A}'],
+    tall: { at: [-300, -380], plate: 0 } },
+  { id: 'f-tab', p: 'F', at: [-118, 64], a: 'middle', on: [48.0, 57.6], lines: ['tableau {R5}', '^couch *Thesm.* 261 · seat Pollux 4.128 · “feet up” *Ach.* 399 {A}'],
+    tall: { at: [0, 70], lines: ['tableau {R5}', '^couch *Thesm.* 261 · seat Pollux 4.128', '^“feet up” *Ach.* 399 {A}'] } },
+  { id: 'f-actor', p: 'F', at: [208, 64], a: 'middle', on: [49.6, 57.6], lines: ['actor, on the ground', '^orchestra, no raised stage {R3}'],
+    tall: { at: [0, 166] } },
+  // F, beat 8
+  { id: 'f-her', p: 'F', at: [0, 60], tall: { at: [0, 72] }, a: 'middle', on: [83.1, 84.3], lines: ['Euripides, *Heracles* 1028 {I}', '^bound to a column among the dead'] },
+  { id: 'f-hip', p: 'F', at: [0, 60], tall: { at: [0, 72] }, a: 'middle', on: [85.6, 86.7], lines: ['Euripides, *Hippolytus* 808 {I}', '^Phaedra’s body'] },
+  { id: 'f-aj', p: 'F', at: [0, 60], tall: { at: [0, 72] }, a: 'middle', on: [87.8, 99], lines: ['Sophocles, *Ajax* 346 {I}', '^Ajax among the slaughtered flocks'] },
+  { id: 'f-sher', p: 'F', at: [-228, -38], a: 'middle', plate: 1, on: [85.0, 99], lines: ['*Heracles* 1028'] },
+  { id: 'f-ship', p: 'F', at: [228, -38], a: 'middle', plate: 1, on: [87.3, 99], lines: ['*Hippolytus* 808'] },
+  // S, beat 2
+  { id: 's-skene', p: 'S', at: [26, -262], a: 'start', on: [21.0, 27.3], to: [-9, -250], lines: ['skene {I}', '^wooden stage building'] },
+  { id: 's-door', p: 'S', at: [26, -168], a: 'start', on: [21.8, 27.3], to: [-14, -150], lines: ['door {R2}', '^double door, ~2.8 m wide'] },
+  { id: 's-plat', p: 'S', at: [26, -98], a: 'start', on: [22.6, 27.3], to: [-34, -15], lines: ['platform {R1}', '^2.4 × 1.6 m, ~0.3 m high'] },
+  { id: 's-wheel', p: 'S', at: [26, -40], a: 'start', on: [23.4, 27.3], to: [-46, -7], lines: ['wheels {I}', '^scholion on *Ach.* 408'],
+    tall: { at: [26, -34] } },
+  { id: 's-tab', p: 'S', at: [-330, -246], a: 'start', on: [24.2, 27.3], to: [-86, -98], lines: ['tableau {R5}', '^figure on a couch, set'],
+    tall: { at: [-270, -246] } },
+  { id: 's-hands', p: 'S', at: [-330, -170], a: 'start', on: [25.0, 27.3], to: st => st.hAhead, lines: ['stagehands {R4}', '^crouched, out of sight'],
+    tall: { at: [-270, -160] } },
+  { id: 's-gb', p: 'S', at: [-330, 28], a: 'start', on: [20.6, 81.6], lines: ['^backstage'], tall: { at: [-270, 30] } },
+  { id: 's-go', p: 'S', at: [20, 28], a: 'start', on: [20.6, 81.6], lines: ['^orchestra, no raised stage {R3}'], tall: { lines: ['^no raised stage {R3}'] } },
+  // S, beats 3, 4, 6, 7
+  { id: 's-leaf', p: 'S', at: [-330, -236], a: 'start', on: [30.6, 35.6], to: [-54, -150], lines: ['door leaves', '^swing inward {R6}'] },
+  { id: 's-push', p: 'S', at: [-330, -236], a: 'start', on: [37.4, 45.6], to: st => st.hAhead, lines: ['stagehands push,', '^out of sight {R4}'] },
+  { id: 's-dim', p: 'S', at: [20, 90], a: 'middle', on: [41.4, 45.6], lines: ['≈ 1.8 m in 3–4 s'] },
+  { id: 's-pull', p: 'S', at: [-330, -236], a: 'start', on: [59.2, 65.6], to: st => st.hAhead, lines: ['stagehands pull', '^it back in {R4}'] },
+  { id: 's-wind', p: 'S', cls: 'alt', at: [-330, -214], a: 'start', on: [70.6, 81.6], dim: st => st.windOp, to: [-300, -40], lines: ['alt: windlass and pulley', '^(Casanova 2017)'],
+    tall: { at: [-330, -176] } },
+  // P, beat 7
+  { id: 'p-back', p: 'P', at: [-268, -150], a: 'start', on: [67.2, 81.6], lines: ['^backstage'], tall: { at: [-360, -104] } },
+  { id: 'p-orch', p: 'P', at: [-268, 150], a: 'start', on: [67.2, 81.6], lines: ['^orchestra, toward the audience'], hideIn: 'tall' },
+  { id: 'p-main', p: 'P', at: [-126, -64], a: 'end', on: [67.2, 81.6], lines: ['main version:', '^rolled straight out'] },
+  { id: 'p-turn', p: 'P', cls: 'alt', at: [100, -170], a: 'start', on: [67.6, 73.7], to: [0, -93], lines: ['alt: turntable', '^pivoting in the doorway', '^(Exon 1900;', '^Flickinger 1918)'], tall: { at: [100, -160] } },
+  { id: 'p-dear', p: 'P', cls: 'alt', at: [90, 24], a: 'start', on: [74.8, 81.6], dim: st => st.sizeOp, to: [77, 18], lines: ['Dearden', '^~2.55 × 1.3 m'] },
+  { id: 'p-ours', p: 'P', at: [90, 78], a: 'start', on: [74.8, 81.6], dim: st => st.sizeOp, to: [72, 70], lines: ['ours {R1}', '^2.4 × 1.6 m'],
+    tall: { at: [90, 94] } },
+  { id: 'p-haigh', p: 'P', cls: 'alt', at: [0, 136], a: 'middle', on: [75.4, 81.6], dim: st => st.sizeOp, lines: ['Haigh: ~3 m wide'], tall: { at: [-100, 114], a: 'end' } },
+  // T, beat 7d
+  { id: 't-458', p: 'T', at: [TX(458) - 8, 27], a: 'start', on: [78.8, 99], lines: ['458 BC  *Oresteia* ?'], tall: { at: [32, 8] } },
+  { id: 't-458n', p: 'T', at: [TX(458) - 8, 70], a: 'start', on: [79.2, 99], lines: ['^yes: Haigh, Wiles, Casanova · no: Taplin, Hammond'], tall: { at: [32, 96], lines: ['^contested'] } },
+  { id: 't-425', p: 'T', at: [TX(425), 27], a: 'middle', on: [78.8, 99], lines: ['425 BC  *Acharnians* ✔'], tall: { at: [TX(425) - 20, 8] } },
+  { id: 't-425n', p: 'T', at: [TX(425), 70], a: 'middle', on: [79.2, 99], lines: ['^Ar. *Ach.* 408, parodied as familiar'], hideIn: 'tall' },
+  { id: 't-411', p: 'T', at: [968, 27], a: 'end', on: [78.8, 99], lines: ['411 BC  *Thesmophoriazusae* ✔'], tall: { at: [968, 96] } },
+  { id: 't-411n', p: 'T', at: [968, 70], a: 'end', on: [79.2, 99], lines: ['^Ar. *Thesm.* 96, 265'], hideIn: 'tall' },
+];
+
+function richSVG(parent, str) {
+  for (const part of str.split(/(\*[^*]+\*|_[^_]+_|\{[^}]+\})/g)) {
+    if (!part) continue;
+    if (part[0] === '*') el('tspan', { 'font-style': 'italic' }, parent).textContent = part.slice(1, -1);
+    else if (part[0] === '_') el('tspan', { class: 'gk' }, parent).textContent = didot(part.slice(1, -1));
+    else if (part[0] === '{') el('tspan', { class: 'tag' }, parent).textContent = ' [' + part.slice(1, -1) + ']';
+    else parent.appendChild(document.createTextNode(part));
+  }
+}
+function richHTML(str) {
+  const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  return str.split(/(\*[^*]+\*|_[^_]+_)/g).map(p => !p ? '' :
+    p[0] === '*' ? `<em>${esc(p.slice(1, -1))}</em>` :
+    p[0] === '_' ? `<span class="gk">${esc(didot(p.slice(1, -1)))}</span>` : esc(p)).join('');
+}
+const labelObjs = LABELS.map(spec => {
+  const parent = $(spec.p + '-labels');
+  const o = { spec };
+  if (spec.imark) {
+    o.g = el('g', { class: 'imark', opacity: 0 }, parent);
+    o.c = el('circle', {}, o.g); o.tx = el('text', {}, o.g); o.tx.textContent = 'I';
+    return o;
+  }
+  o.g = el('g', { class: 'lbl' + (spec.cls ? ' ' + spec.cls : ''), opacity: 0 }, parent);
+  o.leader = el('path', { class: 'leader' }, o.g);
+  o.dot = el('circle', { class: 'leaderdot' }, o.g);
+  o.plate = el('rect', { class: 'plate' }, o.g);
+  o.text = el('text', {}, o.g);
+  o.mode = null;
+  return o;
+});
+function specFor(o, mode) { return mode === 'tall' && o.spec.tall ? Object.assign({}, o.spec, o.spec.tall) : o.spec; }
+function buildLabelText(o, sp) {
+  o.text.textContent = '';
+  o.tspans = sp.lines.map(line => {
+    const sec = line[0] === '^';
+    const ts = el('tspan', sec ? { class: 'sec' } : {}, o.text);
+    richSVG(ts, sec ? line.slice(1) : line);
+    return ts;
+  });
+  o.g.classList.toggle('plated', !!sp.plate);
+}
+
+/* ---------------- static HTML overlays ---------------- */
+const capEl = $('cap'), citeEl = $('cite');
+const capBlocks = CAPS.map(b => {
+  const blk = document.createElement('div'); blk.className = 'capblock'; blk.style.opacity = 0;
+  const parts = [];
+  for (const ln of b.lines) {
+    const line = document.createElement('div'); line.className = 'capline c-' + ln.c;
+    if (ln.p) {
+      const sp = document.createElement('span');
+      for (const [tin, txt] of ln.p) {
+        const s = document.createElement('span'); s.innerHTML = richHTML(txt); sp.appendChild(s);
+        parts.push({ n: s, a: tin, b: 999 });
+      }
+      line.appendChild(sp);
+    } else {
+      for (const [tin, tout, txt] of ln.v) {
+        const s = document.createElement('span'); s.innerHTML = richHTML(txt); line.appendChild(s);
+        parts.push({ n: s, a: tin + .3, b: tout - .3, f: .3 });
+      }
+    }
+    blk.appendChild(line);
+  }
+  capEl.appendChild(blk);
+  return { b, blk, parts, text: b.lines.map(l => (l.p || l.v).map(x => x[x.length - 1]).join(' ')).join(' ').replace(/[*_]/g, '') };
+});
+const citeSpans = CITES.map(([a, b, txt]) => {
+  const s = document.createElement('span'); s.innerHTML = richHTML(txt); s.style.opacity = 0; citeEl.appendChild(s); return { a, b, s };
+});
+document.querySelectorAll('[data-gk]').forEach(n => { n.textContent = didot(n.textContent); });
+const ticksEl = $('ticks');
+BEATS.forEach((b, i) => { if (i) { const k = document.createElement('i'); k.style.left = (b.t0 / TOTAL * 100) + '%'; ticksEl.appendChild(k); } });
+
+/* ---------------- scene state as a pure function of t ---------------- */
+const HS = { ua: 20, la: 20, th: 25, sh: 25, torso: 31 };
+const POSE = {
+  idle: { hip: [-34, -27], ang: 40, feet: [-47, -25] },
+  push: { hip: [-47, -35], ang: 62, feet: [-73, -37] },
+  pull: { hip: [-46, -30], ang: 50, feet: [-26, -12] },
+};
+function joint(a, b, l1, l2, pick) {
+  let dx = b[0] - a[0], dy = b[1] - a[1], d = Math.hypot(dx, dy);
+  const dd = Math.min(Math.max(d, Math.abs(l1 - l2) + .01), l1 + l2 - .01);
+  const base = Math.atan2(dy, dx), k = Math.acos(clamp((l1 * l1 + dd * dd - l2 * l2) / (2 * l1 * dd), -1, 1));
+  const c1 = [a[0] + l1 * Math.cos(base + k), a[1] + l1 * Math.sin(base + k)];
+  const c2 = [a[0] + l1 * Math.cos(base - k), a[1] + l1 * Math.sin(base - k)];
+  return pick(c1, c2) ? c1 : c2;
+}
+function stepOffset(delta, phi, stride) {
+  const g = k => { const n = Math.floor(k), u = k - n; return n + E.io(clamp((u - .5) / .5)); };
+  const k = delta / stride + phi, k0 = phi;
+  return (g(k) - k - (g(k0) - k0)) * stride;
+}
+function stepLift(delta, phi, stride) {
+  const k = delta / stride + phi, u = k - Math.floor(k);
+  return u > .5 ? Math.sin(Math.PI * (u - .5) / .5) : 0;
+}
+function stagehand(C, w, delta, phis, moving, shift) {
+  const P = {};
+  for (const key of ['hip', 'feet']) P[key] = POSE.idle[key].map((v, i) => v * w.idle + POSE.push[key][i] * w.push + POSE.pull[key][i] * w.pull);
+  const ang = (POSE.idle.ang * w.idle + POSE.push.ang * w.push + POSE.pull.ang * w.pull) * Math.PI / 180;
+  const hip = [C[0] + P.hip[0] + shift[0], P.hip[1] + shift[1]];
+  const sh = [hip[0] + HS.torso * Math.sin(ang), hip[1] - HS.torso * Math.cos(ang)];
+  const head = [sh[0] + 11 * Math.sin(ang) + 2.5, sh[1] - 11 * Math.cos(ang) - 1];
+  const hands = [[C[0], C[1]], [C[0] - 1.5, C[1] - 2.5]];
+  const arms = hands.map(h => { const e = joint(sh, h, HS.ua, HS.la, (a, b) => a[1] > b[1]); return [sh, e, h]; });
+  const legs = P.feet.map((fx, i) => {
+    const foot = [C[0] + fx + shift[0] + stepOffset(delta, phis[i], 27), -stepLift(delta, phis[i], 27) * 4 * moving];
+    const knee = joint(hip, foot, HS.th, HS.sh, (a, b) => a[0] > b[0]);
+    return [hip, knee, foot, [foot[0] + 8, foot[1]]];
+  });
+  return { hip, sh, head, arms, legs };
+}
+const pts = arr => 'M' + arr.map(p => r2(p[0]) + ',' + r2(p[1])).join('L');
+function capsule(p, q, r) {
+  const dx = q[0] - p[0], dy = q[1] - p[1], L = Math.hypot(dx, dy) || .001, nx = -dy / L * r, ny = dx / L * r;
+  const P = (x, y) => r2(x) + ',' + r2(y);
+  return `M${P(p[0] + nx, p[1] + ny)}L${P(q[0] + nx, q[1] + ny)}A${r},${r} 0 0 0 ${P(q[0] - nx, q[1] - ny)}L${P(p[0] - nx, p[1] - ny)}A${r},${r} 0 0 0 ${P(p[0] + nx, p[1] + ny)}Z`;
+}
+function drawHand(id, g) {
+  let d = capsule(g.hip, g.sh, 6.6);
+  for (const [h, k, f, toe] of g.legs) d += capsule(h, k, 3.9) + capsule(k, f, 3.2) + capsule(f, toe, 2.2);
+  for (const [s, e, h] of g.arms) d += capsule(s, e, 2.8) + capsule(e, h, 2.4);
+  const [hx, hy] = g.head, R = 8.4;
+  d += `M${r2(hx - R)},${r2(hy)}A${R},${R} 0 1 0 ${r2(hx + R)},${r2(hy)}A${R},${R} 0 1 0 ${r2(hx - R)},${r2(hy)}Z`;
+  $(id + '-o').setAttribute('d', d); $(id + '-f').setAttribute('d', d);
+}
+
+function sceneState(t) {
+  const st = {};
+  st.d = track(t, [[30.2, 0], [33.4, 1], [62.8, 1], [65.4, 0], [66.3, 0], [67.6, 1]]);
+  st.p = track(t, [[37.6, 0], [41.2, 1], [59.4, 1], [62.8, 0]]);
+  st.moving = Math.max(win(t, 37.7, 41.1, .15), win(t, 59.5, 62.7, .15));
+  st.wPush = track(t, [[36.6, 0], [37.5, 1], [41.4, 1], [43.0, 0]]);
+  st.wPull = track(t, [[58.5, 0], [59.4, 1], [62.9, 1], [64.0, 0]]);
+  st.turnOp = track(t, [[66.9, 0], [67.6, 1], [73.8, 1], [74.4, .22]]);
+  st.turnAng = track(t, [[68.2, 0], [70.2, 180]]);
+  st.windOp = track(t, [[70.1, 0], [70.8, 1], [73.9, 1], [74.5, .5]]);
+  st.windP = track(t, [[71.0, 0], [73.4, 1]]);
+  st.sizeOp = track(t, [[74.1, 0], [74.8, 1], [77.9, 1], [78.5, .55]]);
+  return st;
+}
+
+/* ---------------- render ---------------- */
+let mode = 'wide';
+const stage = $('stage');
+function leafQuad(side, th) {
+  const s = Math.sin(th), c = Math.cos(th), w = 84 * c + 12 * s, hx = side * 84, fx = hx - side * w;
+  return [[hx, -192], [fx, -192 + 10 * s], [fx, -3 * s], [hx, 0]];
+}
+function qpt(Q, u, v) {
+  const tp = [lerp(Q[0][0], Q[1][0], u), lerp(Q[0][1], Q[1][1], u)], bt = [lerp(Q[3][0], Q[2][0], u), lerp(Q[3][1], Q[2][1], u)];
+  return [lerp(tp[0], bt[0], v), lerp(tp[1], bt[1], v)];
+}
+const quadD = (Q, u0, u1, v0, v1) => pts([qpt(Q, u0, v0), qpt(Q, u1, v0), qpt(Q, u1, v1), qpt(Q, u0, v1)]) + 'Z';
+
+function renderF(t, st, c) {
+  const th = st.d * Math.PI / 2, s = Math.sin(th);
+  for (const [side, k] of [[-1, 'L'], [1, 'R']]) {
+    const Q = leafQuad(side, th);
+    $('F-l' + k).setAttribute('d', pts(Q) + 'Z');
+    set($('F-l' + k + 's'), { d: pts(Q) + 'Z', opacity: r2(.55 * s) });
+    $('F-l' + k + 'p').setAttribute('d', quadD(Q, .17, .83, .07, .45) + quadD(Q, .17, .83, .54, .93));
+    const rp = qpt(Q, .86, .52);
+    set($('F-l' + k + 'r'), { cx: r2(rp[0]), cy: r2(rp[1]), opacity: r2(1 - s) });
+  }
+  const gap = Math.max(0, 84 - (84 * Math.cos(th) + 12 * s));
+  const gx = gap + 220 * clamp(st.p / .2);
+  set($('clipFplatR'), { x: r2(-gx), width: r2(2 * gx) });
+  const q = st.p, plat = $('F-plat');
+  plat.setAttribute('transform', `translate(0,${r2(-6 * (1 - q))}) scale(${r2(.93 + .07 * q)})`);
+  plat.setAttribute('opacity', t < 82 ? 1 : 0);
+  $('F-dim').setAttribute('opacity', r2(.84 * (1 - clamp((q - .12) / .7))));
+  $('F-shadow').setAttribute('opacity', r2(.2 * q * (t < 82 ? 1 : 0)));
+  /* the reclining figure's gesturing arm (beat 5 dialogue) */
+  const fg = Math.max(win(t, 52.1, 53.5, .35), win(t, 55.7, 57.1, .35));
+  const fEl = [lerp(-20, -18, fg), lerp(-64, -76, fg)], fH = [lerp(-10, -9, fg), lerp(-69, -90, fg)];
+  const ad = pts([[-28, -74], fEl, fH]);
+  $('F-farm-o').setAttribute('d', ad); $('F-farm-f').setAttribute('d', ad);
+  $('F-tab').setAttribute('transform', `translate(${r2(fH[0] + 10)},${r2(fH[1] + 69)})`);
+  $('F-ftalk').setAttribute('opacity', r2(fg * win(t, 49, 57.6)));
+  /* standing actor, enters and speaks */
+  const aOp = win(t, 47.2, 57.6, .5);
+  const ax = track(t, [[47.0, 430], [49.8, 166]]), walking = t > 47 && t < 49.8;
+  const bob = walking ? -1.4 * Math.abs(Math.sin((430 - ax) / 10)) : 0;
+  set($('F-actor'), { opacity: r2(aOp), transform: `translate(${r2(ax)},${r2(bob)})` });
+  $('F-actor-body').setAttribute('transform', 'scale(-1,1)');
+  const ag = Math.max(win(t, 50.3, 51.7, .35), win(t, 53.9, 55.3, .35));
+  const aE = [lerp(12, 16, ag), lerp(-66, -71, ag)], aH = [lerp(12, 25, ag), lerp(-54, -83, ag)];
+  const aad = pts([[7, -80], aE, aH]);
+  $('F-aarm-o').setAttribute('d', aad); $('F-aarm-f').setAttribute('d', aad);
+  $('F-atalk').setAttribute('opacity', r2(ag));
+  /* beat 1 cry, beat 2 cut line, beat 3 door dimension */
+  const cry = win(t, 8.2, 11.6, .3);
+  $('F-cry').setAttribute('opacity', r2(cry * (.55 + .45 * Math.sin(t * 7.5))));
+  const cy2 = track(t, [[15.6, -336], [17.2, 52]]);
+  set($('F-cut'), { y2: r2(cy2), opacity: r2(win(t, 15.6, 20.0, .4)) });
+  $('F-dimdoor').setAttribute('opacity', r2(win(t, 30.2, 35.6)));
+  /* beat 8 cards */
+  for (const cd of CARDS) {
+    const g = $('card-' + cd.id);
+    if (t < cd.inA - .01) { g.setAttribute('opacity', 0); continue; }
+    const inP = clamp((t - cd.inA) / .7), qq = E.io(inP);
+    const mv = cd.slot ? E.io(clamp((t - cd.mv) / .7)) : 0;
+    const k = lerp(.93 + .07 * qq, .6, mv);
+    const x = cd.slot ? lerp(0, cd.slot[0], mv) : 0, y = cd.slot ? lerp(-6 * (1 - qq), cd.slot[1], mv) : -6 * (1 - qq);
+    set(g, { opacity: r2(E.sine(clamp(inP * 1.6))), transform: `translate(${r2(x)},${r2(y)}) scale(${r2(k)})` });
+    $('card-' + cd.id + '-dim').setAttribute('opacity', r2(.85 * (1 - clamp((qq - .1) / .8))));
+    $('card-' + cd.id + '-frame').setAttribute('opacity', r2(mv));
+  }
+}
+function renderS(t, st) {
+  const th = st.d * Math.PI / 2, w = 84 * Math.sin(th) + 5 * Math.cos(th);
+  set($('S-leaf'), { x: r2(-12 - w), width: r2(w) });
+  const delta = 108 * st.p, back = -130 + delta;
+  $('S-plat').setAttribute('transform', `translate(${r2(back)},0)`);
+  const rot = delta / 7 * 180 / Math.PI;
+  $('S-w1').setAttribute('transform', `translate(12,-7) rotate(${r2(rot)})`);
+  $('S-w2').setAttribute('transform', `translate(84,-7) rotate(${r2(rot)})`);
+  const wts = { push: st.wPush, pull: st.wPull, idle: 1 - st.wPush - st.wPull };
+  const C = [back, -15];
+  const gB = stagehand(C, wts, delta, [.12, .62], st.moving, [-9, -3]);
+  const gA = stagehand(C, wts, delta, [0, .5], st.moving, [0, 0]);
+  drawHand('hB', gB); drawHand('hA', gA);
+  $('hB').setAttribute('opacity', .78);
+  st.hAhead = gA.head;
+  /* force arrows */
+  const pushO = win(t, 37.3, 41.4, .3), pullO = win(t, 59.2, 62.9, .3);
+  if (pushO > 0) set($('S-push'), { d: `M${r2(back - 96)},-108H${r2(back - 34)}`, opacity: r2(pushO) });
+  else if (pullO > 0) set($('S-push'), { d: `M${r2(back - 34)},-108H${r2(back - 96)}`, opacity: r2(pullO) });
+  else $('S-push').setAttribute('opacity', 0);
+  $('S-dim').setAttribute('opacity', r2(win(t, 41.4, 45.6)));
+  /* beat 7(b): windlass ghost */
+  $('S-ghost').setAttribute('opacity', r2(st.windOp));
+  if (st.windOp > 0) {
+    const off = 108 * st.windP, a = st.windP * Math.PI * 6;
+    $('S-crank').setAttribute('d', `M-300,-24L${r2(-300 + 17 * Math.cos(a))},${r2(-24 + 17 * Math.sin(a))}`);
+    $('S-rope').setAttribute('d', `M-300,-10L116,-2M116,-14L${r2(-34 + off)},-14`);
+    $('S-gplat').setAttribute('x', r2(-130 + off));
+  }
+}
+function renderP(t, st) {
+  set($('P-turn'), { opacity: r2(st.turnOp) });
+  $('P-turnrot').setAttribute('transform', `rotate(${r2(st.turnAng)} 0 -9)`);
+  set($('P-size'), { opacity: r2(st.sizeOp) });
+  $('P-out').setAttribute('opacity', r2(.45 + .55 * st.sizeOp));
+}
+
+function placeLabels(t, st, P, c) {
+  const M = MODES[mode];
+  for (const o of labelObjs) {
+    if (o.spec.p !== P) continue;
+    const sp = specFor(o, mode);
+    let op = (sp.hideIn === mode) ? 0 : win(t, sp.on[0], sp.on[1]);
+    if (sp.dim) op *= sp.dim(st);
+    if (op < .01) { if (o.g.getAttribute('opacity') !== '0') o.g.setAttribute('opacity', 0); continue; }
+    const fs = M.L / c.s;
+    o.g.setAttribute('opacity', r2(op));
+    if (o.spec.imark) {
+      const r = fs * .62;
+      set(o.c, { cx: sp.at[0], cy: sp.at[1], r: r2(r), 'stroke-width': r2(1.2 / c.s) });
+      set(o.tx, { x: sp.at[0], y: r2(sp.at[1] + r * .5), 'font-size': r2(r * 1.3) });
+      continue;
+    }
+    if (o.mode !== mode) { buildLabelText(o, sp); o.mode = mode; }
+    set(o.text, { 'font-size': r2(fs), 'text-anchor': sp.a || 'start', 'stroke-width': r2(fs * .3) });
+    o.tspans.forEach((ts, i) => set(ts, { x: r2(sp.at[0]), y: r2(sp.at[1] + i * fs * 1.2) }));
+    const pad = fs * .42;
+    let bb = null;
+    if (sp.plate || sp.to) bb = o.text.getBBox();
+    if (sp.plate) set(o.plate, { x: r2(bb.x - pad), y: r2(bb.y - pad * .6), width: r2(bb.width + 2 * pad), height: r2(bb.height + 1.2 * pad), rx: r2(fs * .3), 'stroke-width': r2(1 / c.s), opacity: 1 });
+    else o.plate.setAttribute('opacity', 0);
+    if (sp.to) {
+      const to = typeof sp.to === 'function' ? sp.to(st) : sp.to;
+      const g = sp.plate ? pad * 1.2 : fs * .35, my = sp.at[1] - fs * .34;
+      let ax, ay;
+      if (to[0] < bb.x - g) { ax = bb.x - g; ay = my; }
+      else if (to[0] > bb.x + bb.width + g) { ax = bb.x + bb.width + g; ay = my; }
+      else if (to[1] < bb.y) { ax = clamp(to[0], bb.x, bb.x + bb.width); ay = bb.y - g * .6; }
+      else { ax = clamp(to[0], bb.x, bb.x + bb.width); ay = bb.y + bb.height + g * .6; }
+      set(o.leader, { d: `M${r2(ax)},${r2(ay)}L${r2(to[0])},${r2(to[1])}`, 'stroke-width': r2(1.3 / c.s), opacity: .6 });
+      set(o.dot, { cx: r2(to[0]), cy: r2(to[1]), r: r2(2.4 / c.s), opacity: 1 });
+    } else { o.leader.setAttribute('opacity', 0); o.dot.setAttribute('opacity', 0); }
+  }
+}
+
+let lastBeat = -1;
+function render(t) {
+  const M = MODES[mode], st = sceneState(t);
+  const titleOp = win(t, -1, 4.2, .4);
+  for (const P of ['F', 'S', 'P', 'T']) {
+    const pn = panels[P], c = cam(P, t, mode);
+    const vis = c.op > .004;
+    pn.root.style.display = vis ? '' : 'none';
+    pn.frame.style.display = pn.title.style.display = pn.tplate.style.display = pn.sbar.style.display = pn.stext.style.display = vis ? '' : 'none';
+    if (!vis) continue;
+    const [x, y, w, h] = c.f;
+    pn.root.setAttribute('opacity', r2(c.op));
+    set(pn.cr, { x: r2(x), y: r2(y), width: r2(w), height: r2(h) });
+    set(pn.bg, { x: r2(x), y: r2(y), width: r2(w), height: r2(h), opacity: P === 'F' ? 0 : 1 });
+    pn.world.setAttribute('transform', `translate(${r2(x + w / 2)},${r2(y + h / 2)}) scale(${r2(c.s)}) translate(${r2(-c.cx)},${r2(-c.cy)})`);
+    const chrome = Math.pow(c.op, 3) * (1 - win(t, -1, 4.6, .4)) * clamp((w - 500) / 260);
+    set(pn.frame, { x: r2(x), y: r2(y), width: r2(w), height: r2(h), opacity: r2(chrome) });
+    set(pn.title, { x: r2(x + M.PT * 1.1), y: r2(y + M.PT * 2), 'font-size': M.PT, opacity: r2(chrome) });
+    const tkey = mode + PTITLES[mode][P];
+    if (pn.twKey !== tkey) { pn.title.textContent = PTITLES[mode][P].toUpperCase(); pn.tw = pn.title.getComputedTextLength(); pn.twKey = tkey; }
+    set(pn.tplate, { x: r2(x + M.PT * .55), y: r2(y + M.PT * .9), width: r2(pn.tw + M.PT * 1.1), height: r2(M.PT * 1.6), rx: r2(M.PT * .3), opacity: pn.tw ? r2(chrome) : 0 });
+    const sbOn = P !== 'T' ? chrome : 0, L1 = 60 * c.s, bx = x + w - M.SB, by = y + h - M.SB;
+    set(pn.sbar, { d: `M${r2(bx - L1)},${r2(by - 5)}V${r2(by)}H${r2(bx)}V${r2(by - 5)}`, opacity: r2(sbOn) });
+    set(pn.stext, { x: r2(bx - L1 - M.SB * .45), y: r2(by + 1), 'font-size': r2(M.SB), opacity: r2(sbOn) });
+    if (P === 'F') renderF(t, st, c);
+    if (P === 'S') renderS(t, st);
+    if (P === 'P') renderP(t, st);
+    placeLabels(t, st, P, c);
+  }
+  $('glow').setAttribute('opacity', r2(track(t, [[0, 1], [5, 1], [8, .35]])));
+  /* overlays */
+  $('titlecard').style.opacity = r2(titleOp);
+  for (const cb of capBlocks) {
+    const o = win(t, cb.b.a, cb.b.b);
+    cb.blk.style.opacity = r2(o);
+    cb.blk.style.visibility = o > 0 ? 'visible' : 'hidden';
+    if (o > 0) for (const pt of cb.parts) pt.n.style.opacity = r2(win(t, pt.a, pt.b, pt.f || .4));
+  }
+  for (const cs of citeSpans) cs.s.style.opacity = r2(win(t, cs.a, cs.b, .3));
+  /* controls */
+  const bi = beatAt(t);
+  scrub.value = t.toFixed(2);
+  scrub.style.setProperty('--pct', (t / TOTAL * 100).toFixed(2) + '%');
+  $('time').textContent = fmt(t) + ' / ' + fmt(TOTAL);
+  if (bi !== lastBeat) {
+    lastBeat = bi;
+    $('beatlabel').innerHTML = `${bi} / 9 <span>·</span> ${BEATS[bi].name}`;
+    const cb = capBlocks.find(x => x.b.a >= BEATS[bi].t0 - .01 && x.b.a < beatEnd(bi));
+    $('live').textContent = `Beat ${bi} of 9, ${BEATS[bi].name}.` + (cb ? ' ' + cb.text : '');
+  }
+  $('bigplay').hidden = playing || t > .01;
+}
+function beatAt(t) { let i = 0; for (let k = 0; k < BEATS.length; k++) if (t >= BEATS[k].t0 - 1e-6) i = k; return i; }
+function fmt(s) { s = Math.round(s); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
+
+/* ---------------- playback ---------------- */
+const scrub = $('scrub');
+const reduce = window.matchMedia ? matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
+let t = 0, playing = false, lastTs = null, slideTimer = null, needsRender = true;
+function setT(nt) { t = clamp(nt, 0, TOTAL); needsRender = true; requestFrame(); }
+let rafPending = false;
+function requestFrame() { if (!rafPending) { rafPending = true; requestAnimationFrame(tick); } }
+function tick(ts) {
+  rafPending = false;
+  if (playing && !reduce.matches) {
+    if (lastTs != null) t = Math.min(TOTAL, t + Math.min((ts - lastTs) / 1000, .1));
+    lastTs = ts; needsRender = true;
+    if (t >= TOTAL) pause();
+  }
+  if (needsRender) { render(t); needsRender = false; }
+  if (playing && !reduce.matches) requestFrame();
+}
+function play() {
+  if (t >= TOTAL - .02) t = 0;
+  playing = true; lastTs = null;
+  if (reduce.matches) slideshow();
+  updatePlayUI(); needsRender = true; requestFrame();
+}
+function pause() { playing = false; lastTs = null; clearTimeout(slideTimer); updatePlayUI(); needsRender = true; requestFrame(); }
+function toggle() { playing ? pause() : play(); }
+/* reduced motion: playing steps through still key frames, no tweening */
+function slideshow() {
+  clearTimeout(slideTimer);
+  const i = beatAt(t);
+  if (Math.abs(t - BEATS[i].key) > .05) setT(BEATS[i].key);
+  slideTimer = setTimeout(() => {
+    if (!playing) return;
+    const j = beatAt(t);
+    if (j >= BEATS.length - 1) { pause(); return; }
+    setT(BEATS[j + 1].key); slideshow();
+  }, 7000);
+}
+function stepBeat(dir) {
+  const i = beatAt(t);
+  if (reduce.matches) {
+    let j = i + dir;
+    if (dir < 0 && t > BEATS[i].key + .05) j = i;
+    if (dir > 0 && t < BEATS[i].key - .05) j = i;
+    setT(BEATS[clamp(j, 0, BEATS.length - 1)].key);
+    if (playing) slideshow();
+    return;
+  }
+  let j = dir > 0 ? i + 1 : (t - BEATS[i].t0 > 1.2 ? i : i - 1);
+  j = clamp(j, 0, BEATS.length - 1);
+  setT(BEATS[j].t0); lastTs = null;
+}
+function updatePlayUI() {
+  $('playtext').textContent = playing ? 'Pause' : 'Play';
+  $('play').setAttribute('aria-label', playing ? 'Pause' : 'Play');
+  $('playicon').innerHTML = playing ? '<path d="M3.5 2.5h3v11h-3zM9.5 2.5h3v11h-3z"/>' : '<path d="M4 2.5v11l9.5-5.5z"/>';
+}
+$('play').addEventListener('click', toggle);
+$('bigplay').addEventListener('click', () => { play(); $('play').focus({ preventScroll: true }); });
+$('prev').addEventListener('click', () => stepBeat(-1));
+$('next').addEventListener('click', () => stepBeat(1));
+scrub.addEventListener('input', () => { setT(parseFloat(scrub.value)); lastTs = null; });
+document.addEventListener('keydown', e => {
+  if (e.altKey || e.ctrlKey || e.metaKey) return;
+  if (e.code === 'Space' || e.key === ' ') { e.preventDefault(); if (!e.repeat) toggle(); }
+  else if (e.key === 'ArrowRight') { e.preventDefault(); stepBeat(1); }
+  else if (e.key === 'ArrowLeft') { e.preventDefault(); stepBeat(-1); }
+});
+document.addEventListener('keyup', e => { if (e.code === 'Space' || e.key === ' ') e.preventDefault(); });
+
+/* ---------------- responsive mode ---------------- */
+const app = $('app');
+function applyMode() {
+  const avail = app.clientWidth - parseFloat(getComputedStyle(app).paddingLeft) - parseFloat(getComputedStyle(app).paddingRight);
+  const m = avail < 720 ? 'tall' : 'wide';
+  if (m !== mode) {
+    mode = m; stage.dataset.mode = m;
+    const M = MODES[m];
+    svg.setAttribute('viewBox', `0 0 ${M.W} ${M.H}`);
+    for (const id of ['stbg', 'glow']) set($(id), { width: M.W, height: M.H });
+  }
+  document.documentElement.style.setProperty('--stage-w', stage.getBoundingClientRect().width + 'px');
+  needsRender = true; requestFrame();
+}
+if (window.ResizeObserver) new ResizeObserver(applyMode).observe(app); else addEventListener('resize', applyMode);
+applyMode();
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { for (const P in panels) panels[P].twKey = ''; needsRender = true; requestFrame(); });
+render(t);
+updatePlayUI();
+
+/* small hook for testing and embedding */
+window.ekkyklema = { seek: s => { setT(s); render(t); }, play, pause, get t() { return t; }, get mode() { return mode; }, beats: BEATS };
+})();
+</script>
