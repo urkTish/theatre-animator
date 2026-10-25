@@ -62,7 +62,7 @@ Greek text: Storr's Loeb (1913), PerseusDL (`tlg0011.tlg003.perseus-grc2`).
 - The word *ekkyklema* is not in the text. Its use here is inferred from the opened doors and the revealed interior.
 
 ## Modern scholarship
-Done (2026-10-25). The findings are in SOURCES.md. Stages 2–3 are drafted (SOURCES.md, STORYBOARD.md, layout.svg, ../../shared/STYLE.md). **Waiting at the approval gate.**
+Done (2026-10-25). The findings are in SOURCES.md. Stages 2–3 (SOURCES.md, STORYBOARD.md, layout.svg, ../../shared/STYLE.md) were approved on 2026-10-25 with choices R1–R6. The medium was then changed from a 2D web page to a realistic 3D rendered video; the 2D draft (`index.html`) is kept for reference only. The 3D work is in `3d/`.
 
 ## Open questions
 - Ask the user for the original brief ("Theatre animator.md"), since it is not in this workspace. It holds the agreed stage gates, the output format and the folder conventions.

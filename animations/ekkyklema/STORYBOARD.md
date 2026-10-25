@@ -1,5 +1,6 @@
-# Ekkyklema — storyboard (Stage 3, for approval)
+# Ekkyklema — storyboard (Stage 3, approved 2026-10-25)
 
+**Medium:** realistic rendered 3D video with a moving camera (changed from a 2D web page on 2026-10-25). The beats, captions and choices below still stand; the camera-by-camera version is `3d/SHOTLIST.md`.
 **Goal:** show what the ekkyklema was, how it probably worked, and what scholars still dispute, in about 90 seconds.
 **Setting:** the Theatre of Dionysus, Athens, c. 425–411 BC. This is the period of the two secure Aristophanes passages, so it is the best-evidenced moment.
 **Views:** F = front elevation (the audience's view); S = cutaway side section; P = plan from above. The layout is in `layout.svg`.
@@ -16,6 +17,7 @@ These are the points where the evidence runs out and we have to choose. Each is 
 | R4 | Two stagehands push it from behind, out of sight | *Thesm.* 265 "someone roll me in" [A]; Haigh, Flickinger | Casanova's windlass and pulley |
 | R5 | Demo tableau: a masked figure reclining on a couch, with a stool and props | Pollux's seat [A]; Agathon's couch, *Thesm.* 261 [A]; Euripides "feet up", *Ach.* 399 [A] | — |
 | R6 | The door leaves swing inward | Usual for house doors; no direct evidence | — |
+| R7 | Setting: a plain weathered-timber skene about 12 m wide × 5 m high; a beaten-earth orchestra whose outline is kept out of focus; wooden benches on the hillside | The 5th-century skene was wooden and left no remains. Its size and decoration, and the orchestra's shape, are unknown | — |
 
 ## Beats
 
