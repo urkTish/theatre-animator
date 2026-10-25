@@ -65,10 +65,12 @@ LEAF_T = 0.065
 HINGE_Y = -WALL_T                              # leaves hang at the inner face, swing inward (R6)
 PLAT_W, PLAT_D, PLAT_H = 2.4, 1.6, 0.30        # R1
 WHEEL_R = 0.12
-ROLL = 1.8                                     # travel, metres (storyboard beat 4)
 # the leaves (1.4 m) sweep a quarter circle behind the facade; the platform must wait
 # clear of that sweep, so its front edge starts 1.68 m behind the facade face.
 PLAT_FRONT_IN = -1.68
+# travel: out to the layout.svg OUT position, front edge ~1.25 m beyond the facade face
+# and the back edge just inside the doorway (2.93 m in about 4 s)
+ROLL = 2.93
 PLAT_Y_IN = PLAT_FRONT_IN - PLAT_D / 2         # platform centre, rolled in
 PLAT_Y_OUT = PLAT_Y_IN + ROLL
 
@@ -79,12 +81,12 @@ AXIS_AZ = 345.0                                # true bearing of +Y (theatre axi
 # action timeline (seconds), see SHOTLIST.md
 T = dict(
     cut_in=(17.0, 19.5),        # section cut sweeps through the skene (beat 2)
-    doors_open=(31.0, 34.0),    # beat 3
-    roll_out=(35.0, 38.7),      # beat 4: 1.8 m in 3.7 s
-    roll_in=(58.6, 62.3),       # beat 6
-    doors_close=(62.6, 65.2),
+    doors_open=(30.9, 33.8),    # beat 3
+    roll_out=(34.6, 38.6),      # beat 4: 2.93 m in 4.0 s
+    roll_in=(59.6, 63.4),       # beat 6 (the stagehands come back on camera first, 57.5-59.6)
+    doors_close=(63.6, 65.9),
     plan_on=66.0,               # beat 7: overhead, roof sectioned away
-    roll_out2=(70.4, 74.0),     # beat 7b: windlass comparison
+    roll_out2=(70.4, 74.4),     # beat 7b: windlass comparison
     end_plan=82.0,
     teaser_doors=(87.2, 89.4),  # beat 8: Ajax teaser, doors open again
     end=90.0,
@@ -399,7 +401,7 @@ def mat_plain(name, color, rough=0.6, sss=0.0, sheen=0.0, spec=0.4, bump=0.0, bu
     return m
 
 
-def mat_cloth(name, color, rough=0.85, sheen=0.35, nstr=0.6, size=0.27, fold_bump=0.0, sss=0.0):
+def mat_cloth(name, color, rough=0.9, sheen=0.7, nstr=1.4, size=0.19, fold_bump=0.0, sss=0.0):
     """dyed wool/linen: rough_linen weave for the normal/roughness, solid dye colour"""
     m = new_mat(name)
     nt = NT(m)
@@ -408,7 +410,7 @@ def mat_cloth(name, color, rough=0.85, sheen=0.35, nstr=0.6, size=0.27, fold_bum
     # keep a little of the weave's luminance variation in the dye
     bw = nt.n("ShaderNodeRGBToBW")
     nt.l(col, bw.inputs[0])
-    mr = nt.n("ShaderNodeMapRange", in_From_Min=0.2, in_From_Max=0.8, in_To_Min=0.82, in_To_Max=1.08)
+    mr = nt.n("ShaderNodeMapRange", in_From_Min=0.2, in_From_Max=0.8, in_To_Min=0.70, in_To_Max=1.14)
     nt.l(bw.outputs[0], mr.inputs["Value"])
     # large-scale tonal variation (sun bleaching, dirt)
     nz = nt.n("ShaderNodeTexNoise", in_Scale=2.5, in_Detail=2.0)
@@ -427,7 +429,7 @@ def mat_cloth(name, color, rough=0.85, sheen=0.35, nstr=0.6, size=0.27, fold_bum
     bs.inputs["Roughness"].default_value = rough
     bs.inputs["Specular IOR Level"].default_value = 0.25
     bs.inputs["Sheen Weight"].default_value = sheen
-    bs.inputs["Sheen Roughness"].default_value = 0.6
+    bs.inputs["Sheen Roughness"].default_value = 0.45
     if sss:
         bs.inputs["Subsurface Weight"].default_value = sss
         bs.inputs["Subsurface Scale"].default_value = 0.004
@@ -511,18 +513,19 @@ def mat_section():
 
 
 MAT = {}
-MAT["boards"] = mat_pbr("Facade boards (weathered)", "weathered_planks", 2.0, hsv=(0.5, 0.75, 1.5),
-                        rough=(0.55, 0.95), nstr=1.2, grime=0.45, grime_h=0.9, streaks=0.35)
-MAT["timber"] = mat_pbr("Timber posts", "rough_wood", 0.9, hsv=(0.5, 0.55, 1.4), rough=(0.6, 0.95),
-                        nstr=1.4, grime=0.35, grime_h=0.7, streaks=0.2)
-MAT["roof"] = mat_pbr("Roof deck boards", "weathered_planks", 1.2, hsv=(0.5, 0.7, 0.95), rough=(0.55, 0.95), nstr=1.4,
-                      streaks=0.3)
-MAT["timber_in"] = mat_pbr("Timber interior", "rough_wood", 0.9, hsv=(0.5, 0.85, 0.95), rough=(0.6, 0.95), nstr=1.2)
-MAT["boards_in"] = mat_pbr("Boards interior", "weathered_planks", 2.0, hsv=(0.5, 0.9, 1.05), rough=(0.55, 0.95), nstr=1.0)
+WARM = (0.86, 0.66, 0.47)     # sun-bleached pine/oak toward the STYLE.md wood range
+MAT["boards"] = mat_pbr("Facade boards (weathered)", "weathered_planks", 2.0, hsv=(0.5, 0.9, 2.3),
+                        rough=(0.55, 0.95), nstr=1.2, grime=0.3, grime_h=0.9, streaks=0.25, tint=WARM, tint_fac=0.55)
+MAT["timber"] = mat_pbr("Timber posts", "rough_wood", 0.9, hsv=(0.5, 0.9, 1.15), rough=(0.6, 0.95),
+                        nstr=1.3, grime=0.25, grime_h=0.7, streaks=0.15, tint=WARM, tint_fac=0.55)
+MAT["roof"] = mat_pbr("Roof deck boards", "weathered_planks", 1.2, hsv=(0.5, 0.85, 1.5), rough=(0.55, 0.95), nstr=1.4,
+                      streaks=0.3, tint=WARM, tint_fac=0.55)
+MAT["timber_in"] = mat_pbr("Timber interior", "rough_wood", 0.9, hsv=(0.5, 0.9, 1.1), rough=(0.6, 0.95), nstr=1.2,
+                           tint=WARM, tint_fac=0.55)
 MAT["deck"] = mat_pbr("Platform deck", "weathered_brown_planks", 1.8, hsv=(0.5, 0.85, 1.05), rough=(0.5, 0.9), nstr=1.0)
 MAT["frame"] = mat_pbr("Platform frame", "rough_wood", 0.7, hsv=(0.5, 0.9, 0.75), rough=(0.55, 0.9), nstr=1.2)
-MAT["leaf"] = mat_pbr("Door leaves", "weathered_planks", 1.6, hsv=(0.52, 0.8, 0.72), rough=(0.5, 0.9), nstr=1.2,
-                      grime=0.4, grime_h=0.8, streaks=0.2)
+MAT["leaf"] = mat_pbr("Door leaves", "weathered_planks", 1.6, hsv=(0.5, 0.9, 1.8), rough=(0.5, 0.9), nstr=1.2,
+                      grime=0.3, grime_h=0.8, streaks=0.2, tint=WARM, tint_fac=0.6)
 MAT["couch"] = mat_pbr("Couch wood", "fine_grained_wood", 0.6, hsv=(0.5, 1.0, 1.05), rough=(0.35, 0.7), nstr=0.8)
 MAT["section"] = mat_section()
 MAT["iron"] = mat_plain("Iron fittings", (0.05, 0.045, 0.04), rough=0.55, spec=0.5)
@@ -966,7 +969,7 @@ def build_acropolis():
     wall = b.obj("Acropolis south wall", "Landscape", [mat_stone("Limestone ashlar", (0.56, 0.52, 0.45))])
 
     # Parthenon (438/432 BC), simplified: 8 x 17 Doric columns, stylobate 69.5 x 30.9 m
-    marble = mat_plain("Pentelic marble", (0.66, 0.61, 0.52), rough=0.5, sss=0.0, bump=0.2, bump_scale=3.0)
+    marble = mat_plain("Pentelic marble", (0.58, 0.53, 0.45), rough=0.5, sss=0.0, bump=0.2, bump_scale=3.0)
     cx, cy = -59.0, 146.0
     z0 = terrain_h(cx, cy) - 0.4
     L, W = 69.5, 30.9
@@ -1601,6 +1604,35 @@ def lathe_geom(axis, length, shape, s=1.0, n_around=20, n_along=14, fold=None):
     return verts, faces
 
 
+def capsule_geom(p0, p1, r0, r1, n=12, rings=4):
+    """capsule between two points (outward normals), for small parts such as thumbs"""
+    p0, p1 = Vector(p0), Vector(p1)
+    d = p1 - p0
+    L = d.length
+    ax = d.normalized()
+    tmp = Vector((1, 0, 0)) if abs(ax.x) < 0.9 else Vector((0, 1, 0))
+    u = ax.cross(tmp).normalized()
+    w = ax.cross(u)
+    prof = []
+    for k in range(rings, 0, -1):
+        ph = (math.pi / 2) * k / rings
+        prof.append((-math.sin(ph) * r0, r0 * math.cos(ph)))
+    prof += [(0.0, r0), (L, r1)]
+    for k in range(1, rings + 1):
+        ph = (math.pi / 2) * k / rings
+        prof.append((L + math.sin(ph) * r1, r1 * math.cos(ph)))
+    verts, faces = [], []
+    for (t, r) in prof:
+        for k in range(n):
+            a = 2 * math.pi * k / n
+            verts.append(p0 + ax * t + (u * math.cos(a) + w * math.sin(a)) * r)
+    for i in range(len(prof) - 1):
+        for k in range(n):
+            a0, b0 = i * n + k, i * n + (k + 1) % n
+            faces.append((a0, b0, b0 + n, a0 + n))
+    return verts, faces
+
+
 class Seg:
     pass
 
@@ -1646,6 +1678,15 @@ class Figure:
                 verts, faces = [], []
             else:
                 verts, faces = lathe_geom(sg.rest_dir, length, shape, self.s)
+            if base == "hand":
+                # a thumb on the front edge of the hand, angled across the palm
+                sg_x = 1.0 if sn.endswith(".R") else -1.0
+                p0 = Vector((-0.004 * sg_x, 0.030, -0.030)) * self.s
+                p1 = p0 + Vector((-0.012 * sg_x, 0.022, -0.050)) * self.s
+                tv, tf = capsule_geom(p0, p1, 0.0125 * self.s, 0.0095 * self.s, 10, 3)
+                off = len(verts)
+                verts = list(verts) + tv
+                faces = list(faces) + [tuple(i + off for i in fc) for fc in tf]
             ob = mesh_obj(f"{name} {sn}", verts, faces, cname, smooth=True, mat=skin)
             if verts:
                 add_subsurf(ob, 1, 1)
@@ -1792,12 +1833,17 @@ def garment(fig, parent, name, shape, axis=(0, 0, 1), mat=None, fold=None, solid
 
 
 def build_mask(fig, skin_col, hair_col, beard=False, female=False, name="mask"):
-    """tragic mask: whole-head, slightly oversized, open mouth, eye holes, attached wig"""
+    """tragic mask: a pale painted face standing proud of the head with a raised rim where it
+    meets the wig/hood, deep dark eye holes and a wide open mouth"""
     s = fig.s
     head = fig.seg["head"].obj
     a, bz, c = 0.098 * s, 0.128 * s, 0.118 * s
     cz, cy = 0.105 * s, 0.014 * s
-    R, S = 48, 64
+    R, S = 120, 160
+
+    def face_e(ux, uz):
+        return (ux / 0.80) ** 2 + ((uz + 0.10) / 0.82) ** 2
+
     verts, faces, mats = [], [], []
     uv = []
     for i in range(R + 1):
@@ -1805,16 +1851,20 @@ def build_mask(fig, skin_col, hair_col, beard=False, female=False, name="mask"):
         for j in range(S):
             ph = 2 * math.pi * j / S
             ux, uy, uz = math.sin(th) * math.sin(ph), math.sin(th) * math.cos(ph), math.cos(th)
-            x, y, z = a * ux, c * uy, bz * uz
+            k = 1.0
+            e = face_e(ux, uz)
+            if uy > 0.08 and e < 1.0:
+                k += 0.035 + 0.03 * math.exp(-((e - 0.93) / 0.04) ** 2)       # mask proud of the head, raised rim
+            x, y, z = a * ux * k, c * uy * k, bz * uz * k
             fr = max(0.0, uy)
             y -= c * 0.10 * fr ** 4                                         # flatter face
-            y += c * 0.07 * math.exp(-((uz - 0.30) / 0.09) ** 2) * fr ** 2 * max(0.0, 1 - ux * ux * 1.6)   # brow
-            for ex in (-0.36, 0.36):
-                y -= c * 0.12 * math.exp(-(((ux - ex) / 0.17) ** 2 + ((uz - 0.12) / 0.10) ** 2)) * fr
-            nose = math.exp(-(ux / 0.085) ** 2) * smoothstep(-0.25, -0.12, uz) * (1 - smoothstep(0.12, 0.3, uz))
-            y += c * 0.20 * nose * fr
-            y -= c * 0.10 * math.exp(-((ux / 0.24) ** 2 + ((uz + 0.38) / 0.085) ** 2)) * fr          # mouth
-            y += c * 0.05 * math.exp(-((ux / 0.3) ** 2 + ((uz + 0.66) / 0.12) ** 2)) * fr          # chin
+            y += c * 0.08 * math.exp(-((uz - 0.30) / 0.08) ** 2) * fr ** 2 * max(0.0, 1 - ux * ux * 1.6)   # brow ridge
+            for ex in (-0.34, 0.34):                                       # deep eye sockets
+                y -= c * 0.20 * math.exp(-(((ux - ex) / 0.16) ** 2 + ((uz - 0.13) / 0.10) ** 2)) * fr
+            nose = math.exp(-(ux / 0.085) ** 2) * smoothstep(-0.27, -0.12, uz) * (1 - smoothstep(0.12, 0.3, uz))
+            y += c * 0.22 * nose * fr
+            y -= c * 0.17 * math.exp(-((ux / 0.28) ** 2 + ((uz + 0.42) / 0.13) ** 2)) * fr          # open mouth
+            y += c * 0.05 * math.exp(-((ux / 0.3) ** 2 + ((uz + 0.70) / 0.12) ** 2)) * fr          # chin
             x *= 1.0 + 0.05 * math.exp(-((uz + 0.1) / 0.25) ** 2)                             # cheeks
             verts.append((x, y + cy, z + cz))
             uv.append((ux, uy, uz))
@@ -1823,26 +1873,30 @@ def build_mask(fig, skin_col, hair_col, beard=False, female=False, name="mask"):
             a0 = i * S + j
             b0 = i * S + (j + 1) % S
             faces.append((a0, b0, b0 + S, a0 + S))
-            ux, uy, uz = uv[a0]
-            hole = 0
-            if uy > 0.55:
-                for ex in (-0.36, 0.36):
-                    if ((ux - ex) / 0.15) ** 2 + ((uz - 0.12) / 0.075) ** 2 < 1.0:
-                        hole = 1
-                if (ux / 0.21) ** 2 + ((uz + 0.38) / 0.07) ** 2 < 1.0:
-                    hole = 1
-            if hole == 0 and uy > 0.5:
-                if 0.21 < uz < 0.29 and 0.14 < abs(ux) < 0.58:
-                    hole = 2                                   # painted brows
-                elif (ux / 0.25) ** 2 + ((uz + 0.38) / 0.095) ** 2 < 1.0:
-                    hole = 3                                   # painted lips round the open mouth
-            mats.append(hole)
-    m_skin = mat_plain(f"{fig.name} mask paint", skin_col, rough=0.62, bump=0.15, bump_scale=60, spec=0.35)
-    m_hole = mat_plain("Mask openings", (0.012, 0.01, 0.01), rough=0.9)
-    m_brow = mat_plain("Mask paint dark", (0.05, 0.035, 0.025), rough=0.7)
-    m_lip = mat_plain("Mask paint red", (0.40, 0.17, 0.11), rough=0.6)
+            th = math.pi * (i + 0.5) / R
+            ph = 2 * math.pi * (j + 0.5) / S
+            ux, uy, uz = math.sin(th) * math.sin(ph), math.sin(th) * math.cos(ph), math.cos(th)
+            m = 4                                              # hood under the wig
+            if uy > 0.08 and face_e(ux, uz) < 1.0:
+                m = 0                                          # painted mask surface
+                for ex in (-0.34, 0.34):
+                    if ((ux - ex) / 0.165) ** 2 + ((uz - 0.13) / 0.095) ** 2 < 1.0:
+                        m = 1                                  # eye holes
+                if (ux / 0.24) ** 2 + ((uz + 0.42) / 0.11) ** 2 < 1.0:
+                    m = 1                                      # mouth opening
+                if m == 0:
+                    if 0.24 < uz < 0.31 and 0.13 < abs(ux) < 0.56:
+                        m = 2                                  # painted brows
+                    elif (ux / 0.29) ** 2 + ((uz + 0.42) / 0.15) ** 2 < 1.0:
+                        m = 3                                  # painted lips round the opening
+            mats.append(m)
+    m_skin = mat_plain(f"{fig.name} mask paint", skin_col, rough=0.55, bump=0.25, bump_scale=45, spec=0.4)
+    m_hole = mat_plain("Mask openings", (0.004, 0.003, 0.003), rough=0.95, spec=0.1)
+    m_brow = mat_plain("Mask paint dark", (0.04, 0.03, 0.022), rough=0.6)
+    m_lip = mat_plain("Mask paint red", (0.45, 0.20, 0.14), rough=0.55)
+    m_hood = mat_hair(f"{fig.name} hood", hair_col)
     ob = mesh_obj(f"{fig.name} {name}", verts, faces, "Figures", smooth=True)
-    for mm in (m_skin, m_hole, m_brow, m_lip):
+    for mm in (m_skin, m_hole, m_brow, m_lip, m_hood):
         ob.data.materials.append(mm)
     ob.data.polygons.foreach_set("material_index", mats)
     ob.parent = head
@@ -1869,8 +1923,8 @@ def build_mask(fig, skin_col, hair_col, beard=False, female=False, name="mask"):
             th = math.pi * (i + 0.5) / R2
             ph = 2 * math.pi * (j + 0.5) / S2
             ux, uy, uz = math.sin(th) * math.sin(ph), math.sin(th) * math.cos(ph), math.cos(th)
-            face_zone = uy > 0.25 and uz < 0.42
-            low_front = uz < -0.25 and uy > -0.3
+            face_zone = uy > 0.02 and (ux / 0.86) ** 2 + ((uz + 0.10) / 0.88) ** 2 < 1.0
+            low_front = uz < -0.35 and uy > -0.3
             if face_zone or low_front or uz < -0.75:
                 continue
             hf.append((a0, b0, b0 + S2, a0 + S2))
@@ -2128,7 +2182,7 @@ def build_reclining_actor():
     for side in ("L", "R"):
         garment(fig, "upperarm." + side, "sleeve " + side, dict(t=(-0.05, 0.27), prof=[(-0.05, 0.07, 0.072), (0.12, 0.078, 0.08), (0.27, 0.085, 0.07)], caps=(1, 0)),
                 axis=(0, 0, -1), mat=yel, fold=folds(6, 0.12, 3, -0.05, 0.27), open_ends=(False, True))
-    build_mask(fig, (0.60, 0.42, 0.28), (0.07, 0.045, 0.03), beard=False)
+    build_mask(fig, (0.80, 0.74, 0.63), (0.07, 0.045, 0.03), beard=False)
     for ob in fig.objects():
         if ob.parent is None:
             ob.parent = PLAT["ctrl"]
@@ -2206,7 +2260,7 @@ def build_standing_actor():
         garment(fig, "shin." + sd, "boot " + sd, dict(t=(0.24, 0.43), prof=[(0.24, 0.05, 0.052), (0.43, 0.04, 0.042)], caps=(0, 0)),
                        axis=(0, 0, -1), mat=MAT["boot"], fold=folds(4, 0.03, 16, 0.24, 0.43), open_ends=(True, True), solid=0.004)
         fig.seg["foot." + sd].obj.data.materials[0] = MAT["boot"]
-    build_mask(fig, (0.48, 0.30, 0.19), (0.03, 0.025, 0.02), beard=True)
+    build_mask(fig, (0.74, 0.67, 0.55), (0.03, 0.025, 0.02), beard=True)
     return fig
 
 
@@ -2315,24 +2369,49 @@ def _lerpv(a, b, t):
     return tuple(a[i] + (b[i] - a[i]) * t for i in range(3))
 
 
+def stagehand_root(x, rear, hide, s=1.0, bob=0.0):
+    """pelvis position. push (hide 0): on the ground behind the rear rail. hide 1: out of every
+    frontal sight line: back past the ends of the open door leaves, then sideways behind the
+    facade wall (path: back first, then sideways), crouched low"""
+    sx = 1.0 if x > 0 else -1.0
+    p0 = Vector((x, rear - 0.62))
+    p1 = Vector((x + sx * 0.25, rear - 1.70))
+    p2 = Vector((sx * 1.95, rear - 1.70))
+    if hide <= 0.45:
+        t = smoothstep(0.0, 1.0, hide / 0.45)
+        p = p0.lerp(p1, t)
+    else:
+        p = p1.lerp(p2, smoothstep(0.0, 1.0, (hide - 0.45) / 0.55))
+    crouch = min(1.0, hide / 0.3)
+    return Vector((p.x, p.y, (0.52 - 0.12 * crouch) * s + bob))
+
+
+STAGEHAND_FEET = {"push": {"L": (-0.12, -0.08), "R": (0.12, -0.40)},
+                  "hide": {"L": (-0.13, 0.10), "R": (0.13, -0.16)}}
+
+
 def stagehand_pose(fig, x, rear, feet, frame, lean=0.0, bob=0.0, hide=0.0):
-    """crouched push: pelvis behind the platform's rear edge, hands on the deck edge.
-    hide (0..1) sinks into a low crouch so the head stays below the audience's sight line"""
+    """push: crouched on the ground behind the platform, arms straight down to the top of the
+    rear rail, head well behind the couch. hide (0..1): low crouch, hands on the knees"""
     s = fig.s
-    root = Vector((x, rear - 0.50 - 0.06 * hide, (0.63 - 0.22 * hide) * s + bob))
-    up = Vector(_lerpv((0, 0.70 + lean, 0.71), (0, 0.88, 0.47), hide)).normalized()
-    front = Vector(_lerpv((0, 0.71, -0.70 - lean), (0, 0.47, -0.88), hide))
-    dirs = {"abdomen": _lerpv((0, 0.77 + lean, 0.64), (0, 0.92, 0.40), hide),
-            "chest": _lerpv((0, 0.90, 0.43), (0, 0.98, 0.18), hide),
-            "neck": _lerpv((0, 0.75, 0.66), (0, 0.95, 0.30), hide),
-            "head": _lerpv((0, 0.35, 0.94), (0, 0.75, 0.66), hide)}
-    fronts = {"abdomen": (0, 0.5, -0.8), "chest": (0, 0.3, -0.95), "head": (0, 1, -0.25),
+    root = stagehand_root(x, rear, hide, s, bob)
+    hide = min(1.0, hide / 0.3)          # posture changes early in the retreat
+    up = Vector(_lerpv((0, 0.72 + lean, 0.69), (0, 0.88, 0.47), hide)).normalized()
+    front = Vector(_lerpv((0, 0.69, -0.72 - lean), (0, 0.47, -0.88), hide))
+    dirs = {"abdomen": _lerpv((0, 0.72 + lean, 0.69), (0, 0.88, 0.47), hide),
+            "chest": _lerpv((0, 0.80, 0.60), (0, 0.96, 0.28), hide),
+            "neck": _lerpv((0, 0.55, 0.83), (0, 0.90, 0.43), hide),
+            "head": _lerpv((0, 0.25, 0.97), (0, 0.70, 0.71), hide)}
+    fronts = {"abdomen": (0, 0.5, -0.8), "chest": (0, 0.4, -0.9), "head": (0, 1, -0.2),
               "foot.L": (0, 0, 1), "foot.R": (0, 0, 1), "hand.L": (0, 1, 0), "hand.R": (0, 1, 0)}
-    dirs["hand.L"] = (0, 0.94, -0.33)
-    dirs["hand.R"] = (0, 0.94, -0.33)
-    zt = PLAT_H + 0.06
-    arms = {"R": (Vector((x + 0.17, rear - 0.01, zt)), Vector((0.5, -0.4, -1))),
-            "L": (Vector((x - 0.17, rear - 0.01, zt)), Vector((-0.5, -0.4, -1)))}
+    hd = _lerpv((0, 0.82, -0.57), (0, 0.5, -0.86), hide)
+    dirs["hand.L"] = hd
+    dirs["hand.R"] = hd
+    arms = {}
+    for sd, sg in (("R", 1.0), ("L", -1.0)):
+        push = Vector((x + sg * 0.17, rear - 0.06, PLAT_H + 0.09))
+        rest = root + Vector((sg * 0.17, 0.42, -0.22))
+        arms[sd] = (push.lerp(rest, hide), Vector((sg * 0.5, -0.4, -1)))
     legs = {}
     for sd in ("L", "R"):
         p, lift = feet[sd]
@@ -2343,46 +2422,59 @@ def stagehand_pose(fig, x, rear, feet, frame, lean=0.0, bob=0.0, hide=0.0):
 
 
 def animate_stagehands(figs, xs):
+    """per-frame gait: the pelvis follows the platform (and the hide retreat); each foot stays
+    planted until it lags its neutral spot by 17 cm, then steps (8 frames, 7 cm lift), one
+    foot at a time, so the feet never slide"""
     ctrl = PLAT["ctrl"]
     fc = ctrl.animation_data.action.fcurves.find("location", index=1)
     f_end = scene.frame_end
-    # hide weight: 1 while the platform stands rolled out (they sink low behind the tableau),
-    # easing over 0.8 s after it stops and before it moves again
-    holds = [(F(T["roll_out"][1]), F(T["roll_in"][0])), (F(T["roll_out2"][1]), F(T["end_plan"]))]
-    ramp = int(0.8 * FPS)
+    # hide weight: 1 while the platform stands rolled out; they retreat over 3 s after it stops
+    # and come back over 2.1 s before it moves again (on camera, in the SH08 cutaway). After
+    # the second roll-out they stay hidden until the cut at 82 s.
+    holds = [(F(T["roll_out"][1]), F(T["roll_in"][0]), int(3.0 * FPS), int(2.1 * FPS)),
+             (F(T["roll_out2"][1]), F(T["end_plan"]) - 1, int(3.0 * FPS), 0)]
 
     def hide_w(f):
-        for a, b in holds:
+        for a, b, r_out, r_back in holds:
             if a <= f <= b:
-                return smoothstep(a, a + ramp, f) * (1.0 - smoothstep(b - ramp, b, f))
+                w = smoothstep(a, a + r_out, f)
+                if r_back:
+                    w *= 1.0 - smoothstep(b - r_back, b, f)
+                return w
         return 0.0
+
+    def state(x, f):
+        rear = fc.evaluate(f) - PLAT_D / 2
+        h = hide_w(f)
+        return rear, h, stagehand_root(x, rear, h)
+
     for fig, x in zip(figs, xs):
-        neutral = {"L": (-0.13 if x < 0 else -0.12, -0.14), "R": (0.12 if x < 0 else 0.13, -0.42)}
         planted = {}
         swing = {"L": None, "R": None}
-        prev_root_y = None
+        prev_root = None
         for f in range(1, f_end + 1):
-            y = fc.evaluate(f)
-            rear = y - PLAT_D / 2
-            root_y = rear - 0.50
-            moving = abs(fc.evaluate(f + 1) - fc.evaluate(f - 1)) > 1e-4 or any(swing.values())
-            jump = prev_root_y is not None and abs(root_y - prev_root_y) > 0.25
+            rear, h, root = state(x, f)
+            neutral = {sd: _lerpv(STAGEHAND_FEET["push"][sd] + (0,), STAGEHAND_FEET["hide"][sd] + (0,), h)
+                       for sd in ("L", "R")}
+            r_prev, r_next = state(x, f - 1)[2], state(x, f + 1)[2]
+            moving = (r_next - r_prev).length > 1e-4 or any(swing.values())
+            jump = prev_root is not None and (root - prev_root).length > 0.25
             if not planted or jump:
                 for sd in ("L", "R"):
-                    planted[sd] = Vector((x + neutral[sd][0], root_y + neutral[sd][1], 0))
+                    planted[sd] = Vector((root.x + neutral[sd][0], root.y + neutral[sd][1], 0))
                     swing[sd] = None
-            vel = 0.0 if prev_root_y is None else root_y - prev_root_y
-            direction = 1.0 if vel >= 0 else -1.0
+            vel = Vector((0, 0, 0)) if prev_root is None else (root - prev_root)
+            vel.z = 0
+            lead = vel.normalized() * 0.13 if vel.length > 1e-5 else Vector((0, 0, 0))
             feet = {}
             for sd in ("L", "R"):
                 other = "R" if sd == "L" else "L"
-                want = Vector((x + neutral[sd][0], root_y + neutral[sd][1], 0))
+                want = Vector((root.x + neutral[sd][0], root.y + neutral[sd][1], 0))
                 if swing[sd] is None and swing[other] is None and (want - planted[sd]).length > 0.17:
-                    dest = want + Vector((0, 0.13 * direction, 0))
-                    swing[sd] = (f, planted[sd].copy(), dest)
+                    swing[sd] = (f, planted[sd].copy(), want + lead)
                 if swing[sd] is not None:
                     f0, a, b = swing[sd]
-                    u = (f - f0) / 9.0
+                    u = (f - f0) / 8.0
                     if u >= 1.0:
                         planted[sd] = b
                         swing[sd] = None
@@ -2392,16 +2484,15 @@ def animate_stagehands(figs, xs):
                         feet[sd] = (a.lerp(b, uu), 0.07 * math.sin(math.pi * u))
                 else:
                     feet[sd] = (planted[sd], 0.0)
-            prev_root_y = root_y
-            if not moving and not jump:
-                # key the static pose only at the edges of each still period (and through the hide ramps)
-                still_next = abs(fc.evaluate(f + 2) - fc.evaluate(f)) < 1e-4
-                still_prev = abs(fc.evaluate(f) - fc.evaluate(f - 2)) < 1e-4
-                ramping = abs(hide_w(f + 1) - hide_w(f - 1)) > 1e-4
-                if still_next and still_prev and not ramping and f not in (1, f_end):
+            prev_root = root
+            if not moving and not jump and f not in (1, f_end):
+                # key a still pose only at the edges of each still period
+                r2p, r2n = state(x, f - 2)[2], state(x, f + 2)[2]
+                if (r2n - root).length < 1e-4 and (root - r2p).length < 1e-4:
                     continue
             bob = 0.012 * math.sin(f * 0.9) if moving else 0.0
-            stagehand_pose(fig, x, rear, feet, f, lean=0.06 if moving else 0.0, bob=bob, hide=hide_w(f))
+            plat_moving = abs(fc.evaluate(f + 1) - fc.evaluate(f - 1)) > 1e-4
+            stagehand_pose(fig, x, rear, feet, f, lean=0.06 if plat_moving else 0.0, bob=bob, hide=h)
         for ob in fig.objects():
             ad = ob.animation_data
             if ad and ad.action:
@@ -2746,8 +2837,9 @@ def build_cameras():
         return cam
 
     shot("SH01 establishing", 0.0, 5.0, False, False, [
-        (0.0, (-43.0, -73.0, 33.0), (-2.0, 32.0, 14.0), 28.0),
-        (5.0, (-35.0, -62.0, 27.0), (0.0, 28.0, 11.0), 28.0)], desc="aerial from the south-west: the theatre on the hillside under the Acropolis rock")
+        (0.0, (-46.0, -78.0, 35.0), (-8.0, 46.0, 24.0), 26.0),
+        (5.0, (-40.0, -69.0, 30.0), (-7.0, 43.0, 22.0), 26.0)],
+        desc="aerial from the south-west: the theatre on the hillside, the Acropolis and the Parthenon above")
     shot("SH02 descent", 5.0, 15.0, False, False, [
         (5.0, (-9.0, 74.0, 40.0), (0.0, 2.0, 0.0), 30.0),
         (10.0, (-4.0, 42.0, 15.0), (0.0, -1.0, 1.5), 34.0),
@@ -2755,51 +2847,59 @@ def build_cameras():
     shot("SH03 into the cutaway", 15.0, 28.0, "sweep", False, [
         (15.0, (2.6, 25.5, 3.3), (0.0, -1.0, 1.8), 40.0),
         (18.5, (-10.0, 12.5, 5.5), (-0.5, -1.4, 1.4), 32.0),
-        (22.0, (-8.2, 1.8, 4.4), (0.3, -2.2, 0.8), 30.0),
-        (28.0, (-7.6, 1.2, 4.1), (0.4, -2.2, 0.8), 30.0)], desc="arc round to the west side as the section cuts the skene")
-    shot("SH04 doors open (cutaway)", 28.0, 35.0, True, False, [
-        (28.0, (-5.6, 0.5, 3.3), (0.3, -2.0, 0.75), 30.0),
-        (35.0, (-5.0, 0.7, 3.0), (0.4, -1.6, 0.8), 30.0)], desc="section view: the leaves swing inward")
-    shot("SH05 tracking the roll-out", 35.0, 40.0, True, False,
-         follow=((-3.4, 0.9, 1.05), (0.4, 0.2, 0.75), 28.0), desc="camera rides alongside the platform")
+        (22.0, (-9.2, -0.5, 4.8), (0.2, -2.0, 0.8), 30.0),
+        (28.0, (-6.4, -4.2, 4.0), (0.2, -2.0, 0.8), 30.0)], desc="arc round to the west side as the section cuts the skene")
+    shot("SH04 doors open (cutaway)", 28.0, 34.5, True, False, [
+        (28.0, (-5.7, -4.5, 3.5), (0.3, -1.9, 0.8), 30.0),
+        (34.5, (-5.1, -4.0, 3.2), (0.4, -1.6, 0.8), 30.0)], desc="section view from behind: the leaves swing inward")
+    shot("SH05 tracking the roll-out", 34.5, 40.0, True, False,
+         follow=((-3.3, -1.3, 1.2), (0.4, 0.3, 0.7), 28.0), desc="camera rides alongside the platform, a little behind it")
     shot("SH06 audience eye", 40.0, 46.0, False, False, [
-        (40.0, (1.6, 25.5, 3.6), (0.0, -0.6, 1.4), 50.0),
-        (46.0, (1.1, 20.0, 3.1), (0.0, -0.6, 1.35), 50.0)], desc="what the audience saw: the tableau in the doorway")
-    shot("SH07 orbit the tableau", 46.0, 58.0, False, False, [
-        (46.0, (1.35, 2.25, 1.6), (-0.15, -0.75, 1.0), 45.0),
-        (52.0, (-0.1, 2.6, 1.5), (-0.2, -0.75, 1.0), 45.0),
-        (58.0, (-1.6, 2.2, 1.55), (-0.25, -0.75, 1.0), 45.0)], desc="slow orbit in front of the tableau, actor addressing it")
-    shot("SH08 rolling back in (cutaway)", 58.0, 62.6, True, False, [
-        (58.0, (-7.0, 1.4, 3.6), (0.3, -1.2, 0.8), 30.0),
-        (62.6, (-7.0, 0.8, 3.6), (0.3, -2.0, 0.8), 30.0)], desc="section view: the stagehands pull it back")
-    shot("SH09 doors shut", 62.6, 66.0, False, False, [
-        (62.6, (0.9, 12.5, 2.2), (0.0, -0.3, 1.7), 40.0),
+        (40.0, (1.6, 25.5, 3.6), (0.0, 0.0, 1.3), 50.0),
+        (46.0, (1.1, 20.0, 3.1), (0.0, 0.0, 1.25), 50.0)], desc="what the audience saw: the tableau rolled out of the doorway")
+    shot("SH07 orbit the tableau", 46.0, 57.5, False, False, [
+        (46.0, (4.3, 5.2, 1.75), (0.5, 0.5, 1.0), 40.0),
+        (52.0, (1.0, 6.4, 1.6), (0.45, 0.45, 1.0), 40.0),
+        (58.0, (-2.9, 5.2, 1.7), (0.35, 0.45, 1.0), 40.0)], desc="medium orbit: the whole tableau and the actor addressing it")
+    c7 = cams["SH07 orbit the tableau"]
+    c7.data.dof.use_dof = True
+    c7.data.dof.focus_object = bpy.data.objects["SH07 orbit the tableau target"]
+    c7.data.dof.aperture_fstop = 2.8
+    shot("SH08 rolling back in (cutaway)", 57.5, 63.4, True, False, [
+        (57.5, (-5.9, -3.4, 3.7), (0.2, -0.6, 0.8), 30.0),
+        (63.4, (-5.6, -4.4, 3.4), (0.2, -1.8, 0.8), 30.0)], desc="section view: the stagehands come back and pull it in")
+    shot("SH09 doors shut", 63.4, 66.0, False, False, [
+        (63.4, (0.9, 12.5, 2.2), (0.0, -0.3, 1.7), 40.0),
         (66.0, (0.7, 11.5, 2.1), (0.0, -0.3, 1.7), 40.0)], desc="front: the doors close")
     cam = shot("SH10 overhead: what is disputed", 66.0, 82.0, False, True, None, desc="plan view, ghosts of rival theories")
     cam.constraints.clear()
     cam.rotation_mode = "XYZ"
-    for t, z, rz, lens in ((66.0, 15.5, math.radians(-8), 40.0), (82.0, 14.5, math.radians(6), 40.0)):
+    # rotates until 78.5 s, then a locked hold (nothing moves until the cut: render once, reuse)
+    for t, z, rz, lens in ((66.0, 15.5, math.radians(-8), 40.0), (78.5, 14.6, math.radians(5), 40.0),
+                           (82.0, 14.6, math.radians(5), 40.0)):
         cam.location = (0.4, -1.3, z)
         cam.keyframe_insert("location", frame=F(t))
         cam.rotation_euler = (0.0, 0.0, rz)
         cam.keyframe_insert("rotation_euler", frame=F(t))
         cam.data.lens = lens
         cam.data.keyframe_insert("lens", frame=F(t))
+    # locked off for the composited thumbnails (82-87.2 s: render once, reuse), then a push in
     shot("SH11 reveals and Ajax teaser", 82.0, 90.0, False, False, [
         (82.0, (0.6, 16.0, 2.4), (0.0, -0.4, 1.7), 45.0),
-        (90.0, (0.15, 8.0, 1.9), (0.0, -0.8, 1.5), 50.0)], desc="front: thumbnails composited, then the doors open on darkness")
+        (87.2, (0.6, 16.0, 2.4), (0.0, -0.4, 1.7), 45.0),
+        (90.0, (0.25, 10.0, 2.0), (0.0, -0.8, 1.55), 50.0)], desc="front: thumbnails composited, then the doors open on darkness")
     # look-test cameras (not in the edit)
     cam, tgt = make_camera("LT b audience eye", 45.0)
-    cam.location, tgt.location = (1.5, 21.5, 3.25), (0.0, -0.6, 1.45)
+    cam.location, tgt.location = (1.5, 21.5, 3.25), (0.1, 0.0, 1.3)
     cam, tgt = make_camera("LT clip", 35.0)
     keys = [(30.8, (-4.6, 6.8, 1.7), (0.0, -1.0, 1.3), 35.0), (34.5, (-3.9, 5.8, 1.55), (0.0, -1.2, 1.2), 35.0),
-            (38.8, (-3.0, 4.6, 1.35), (0.2, -0.6, 1.0), 35.0)]
+            (38.8, (-3.3, 5.4, 1.4), (0.3, 0.1, 0.95), 35.0)]
     cam_path(cam, tgt, keys)
     scene.camera = cams["SH01 establishing"]
-    EXPOSURE.update({"SH01 establishing": 0.0, "SH02 descent": 0.1, "SH03 into the cutaway": 0.25,
-                     "SH04 doors open (cutaway)": 0.3, "SH05 tracking the roll-out": 0.3, "SH06 audience eye": 0.3,
-                     "SH07 orbit the tableau": 0.85, "SH08 rolling back in (cutaway)": 0.3, "SH09 doors shut": 0.3,
-                     "SH10 overhead: what is disputed": 0.15, "SH11 reveals and Ajax teaser": 0.35})
+    EXPOSURE.update({"SH01 establishing": 0.0, "SH02 descent": 0.35, "SH03 into the cutaway": 0.3,
+                     "SH04 doors open (cutaway)": 0.35, "SH05 tracking the roll-out": 0.35, "SH06 audience eye": 0.75,
+                     "SH07 orbit the tableau": 0.8, "SH08 rolling back in (cutaway)": 0.35, "SH09 doors shut": 0.6,
+                     "SH10 overhead: what is disputed": 0.15, "SH11 reveals and Ajax teaser": 0.65})
     return cams
 
 
@@ -2910,7 +3010,7 @@ def render_settings():
     r.engine = "CYCLES"
     c = scene.cycles
     c.device = "CPU"
-    c.samples = 96
+    c.samples = 16                       # recommended final: 1280x720, 16 spp + OIDN (see report)
     c.preview_samples = 16
     c.use_adaptive_sampling = False      # measured: slower than fixed samples at <=64 spp here
     c.use_denoising = True
@@ -2933,7 +3033,9 @@ def render_settings():
     c.sample_clamp_indirect = 8.0
     c.use_light_tree = False             # one sun + sky: the light tree only adds overhead
     r.use_persistent_data = True
-    r.resolution_x, r.resolution_y, r.resolution_percentage = 1920, 1080, 100
+    r.resolution_x, r.resolution_y, r.resolution_percentage = 1280, 720, 100
+    r.use_overwrite = False              # resumable: re-running skips frames already on disk
+    r.use_placeholder = True
     r.filepath = "//frames/ekk_####"
     r.image_settings.file_format = "PNG"
     r.image_settings.color_depth = "8"

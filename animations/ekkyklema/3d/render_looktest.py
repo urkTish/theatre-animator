@@ -1,6 +1,6 @@
 """Render the Phase-1 look test and the timing probes from ekkyklema.blend.
 
-    blender -b ekkyklema.blend -P render_looktest.py -- stills  OUTDIR [SAMPLES]
+    blender -b ekkyklema.blend -P render_looktest.py -- stills  OUTDIR [SAMPLES] [TAG ...]
     blender -b ekkyklema.blend -P render_looktest.py -- clip    OUTDIR [SAMPLES] [PERCENT]
     blender -b ekkyklema.blend -P render_looktest.py -- timing  OUTDIR
 
@@ -63,8 +63,11 @@ def render(path, cam, frame, w, h, spp):
 
 if mode == "stills":
     spp = int(argv[2]) if len(argv) > 2 else 64
+    only = set(argv[3:])                       # optional: render only these still tags
     rows = []
     for tag, cam, fr in STILLS:
+        if only and tag not in only:
+            continue
         dt = render(os.path.join(outdir, tag + ".png"), cam, fr, 1920, 1080, spp)
         rows.append((tag, cam, fr, 1920, 1080, spp, round(dt, 1)))
         print("STILL %s %.1fs" % (tag, dt))
