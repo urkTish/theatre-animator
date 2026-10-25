@@ -605,7 +605,7 @@ if IN_BLENDER:
         for sd, sx in (("L", 1.0), ("R", -1.0)):
             P.aim("clavicle." + sd, B.d(sx, 0.35, 0.1))
             P.two_bone(["upperarm01." + sd, "upperarm02." + sd], ["lowerarm01." + sd, "lowerarm02." + sd], "wrist." + sd,
-                       (x + sx * 0.19, REAR - 0.085, PLAT_H + 0.035), B.d(sx * 0.9, -0.2, 0.1))
+                       (x - sx * 0.19, REAR - 0.085, PLAT_H + 0.035), B.d(sx * 0.9, -0.2, 0.1))
             P.hand(sd, B.d(-sx * 0.15, 0.97, -0.05), (0, 0, -1))
             hand_shape(P, sd, "push")
         fwd, back = ("L", "R") if lead == "L" else ("R", "L")
@@ -630,7 +630,7 @@ if IN_BLENDER:
     # ==========================================================================
     # quick Workbench previews (pose checks)
     # ==========================================================================
-    def preview(path, cam_loc, target, lens=50, res=(640, 640), hide=()):
+    def preview(path, cam_loc, target, lens=50, res=(640, 640), hide_ref=False):
         sc = bpy.context.scene
         cam = bpy.data.objects.get("PreviewCam")
         if cam is None:
@@ -652,10 +652,12 @@ if IN_BLENDER:
         sc.render.film_transparent = False
         sc.render.filepath = path
         hidden = []
-        for o in sc.objects:
-            if any(o.name.startswith(h) for h in hide) and not o.hide_render:
-                o.hide_render = True
-                hidden.append(o)
+        mc = bpy.data.collections.get("Mannequins (reference)")
+        if hide_ref and mc:
+            for o in mc.objects:
+                if not o.hide_render:
+                    o.hide_render = True
+                    hidden.append(o)
         bpy.ops.render.render(write_still=True)
         for o in hidden:
             o.hide_render = False
@@ -673,6 +675,10 @@ if IN_BLENDER:
 
     PREVIEW_VIEWS = {
         "tableau_cam": ((1.0, 5.95, 1.6), (0.45, 0.0, 1.0), 40, (960, 540)),
+        "standing_close": ((0.9, 2.6, 1.45), (2.0, 0.65, 1.15), 45, (640, 800)),
+        "standing_hands": ((1.3, 1.7, 1.35), (1.75, 0.65, 1.15), 50, (640, 640)),
+        "reclining_close": ((0.2, 1.3, 1.5), (-0.35, -0.1, 1.2), 40, (800, 640)),
+        "stagehand_close": ((-1.7, -0.3, 1.0), (-0.55, -1.15, 0.45), 40, (800, 640)),
         "standing_front": ((0.6, 0.9, 1.5), (2.0, 0.65, 1.1), 35, (640, 640)),
         "standing_back": ((3.6, 0.0, 1.6), (2.0, 0.65, 1.0), 35, (640, 640)),
         "reclining_front": ((-0.1, 2.0, 1.45), (-0.2, -0.2, 1.05), 35, (800, 600)),
@@ -717,7 +723,8 @@ if IN_BLENDER:
             for v, (cl, tg, lens, res) in PREVIEW_VIEWS.items():
                 if views and v not in views.split(","):
                     continue
-                preview(os.path.join(pdir, v + ".png"), cl, tg, lens, res)
+                show_ref = v in ("tableau_cam", "cutaway_cam")
+                preview(os.path.join(pdir, v + ".png"), cl, tg, lens, res, hide_ref=not show_ref)
             bpy.ops.wm.save_as_mainfile(filepath=os.path.join(work, "posed.blend"))
             print("POSE PREVIEWS DONE %.1fs" % (time.time() - t0))
             return
