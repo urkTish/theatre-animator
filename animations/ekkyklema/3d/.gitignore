@@ -1,2 +1,7 @@
+# big, regenerable files: CC0 asset cache (fetch_assets.py), partial downloads,
+# the built scene and rendered frames
 assets_cache/
 *.part
+*.blend
+*.blend1
+frames/

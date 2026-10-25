@@ -79,46 +79,48 @@
   <text class="lbl" x="880" y="318">door leaf, open inward [R6]</text>
   <rect class="doorR" x="1018" y="330" width="84" height="188" fill-opacity=".35"/>
   <!-- platform IN: 1.6 m deep -->
+  <g transform="translate(-67,0)">
   <rect class="deck" x="990" y="490" width="96" height="18"/>
   <circle class="wheel" cx="1002" cy="513" r="7"/><circle class="wheel" cx="1074" cy="513" r="7"/>
   <rect x="1000" y="470" width="70" height="10" fill="#8a5a34" stroke="#1d1a17"/>
   <circle class="clay" cx="1018" cy="452" r="12"/><path class="clay" d="M1010,470 q6,-12 20,-12 l30,4 l0,8 z"/>
-  <!-- platform OUT ghost (moved 1.8 m) -->
+  </g>
+  <!-- platform OUT ghost (moved 2.9 m: front edge 1.25 m beyond the facade) -->
   <rect class="deckghost" x="1098" y="490" width="96" height="18"/>
   <circle cx="1110" cy="513" r="7" fill="none" stroke="#1d1a17" stroke-dasharray="3 3"/>
   <circle cx="1182" cy="513" r="7" fill="none" stroke="#1d1a17" stroke-dasharray="3 3"/>
-  <path class="arrow" d="M1040,580 L1150,580"/>
-  <text class="lblA" x="1000" y="604"><tspan class="greek">ekkyklein</tspan> roll out → ~1.8 m in 3–4 s</text>
-  <path class="arrow" d="M1150,630 L1040,630"/>
+  <path class="arrow" d="M975,580 L1150,580"/>
+  <text class="lblA" x="1000" y="604"><tspan class="greek">ekkyklein</tspan> roll out → ~2.9 m in ~4 s</text>
+  <path class="arrow" d="M1150,630 L975,630"/>
   <text class="lblA" x="1000" y="654">← <tspan class="greek">eiskyklein</tspan> roll back in (Thesm. 265)</text>
   <!-- stagehands pushing -->
-  <g class="hand">
+  <g class="hand" transform="translate(-70,0)">
     <circle cx="955" cy="452" r="11"/><path d="M944,463 L966,463 L984,500 L976,520 L948,520 z"/>
     <path d="M966,470 L990,492" stroke="#2b2723" stroke-width="7"/>
     <circle cx="912" cy="460" r="11"/><path d="M901,471 L923,471 L936,520 L900,520 z"/>
   </g>
   <text class="lbl" x="836" y="400">stagehands push,</text><text class="lbl" x="836" y="420">unseen [R4]</text>
   <!-- alt: windlass ghost -->
-  <circle class="alt" cx="880" cy="500" r="16"/>
-  <path class="alt" d="M896,500 L1230,500"/>
-  <circle class="alt" cx="1236" cy="500" r="6"/>
-  <text class="lblAlt" x="1210" y="478">alt: windlass + pulley (Casanova 2017)</text>
+  <circle class="alt" cx="832" cy="500" r="9"/>
+  <path class="alt" d="M841,500 L1150,500"/>
+  <circle class="alt" cx="1156" cy="500" r="6"/>
+  <text class="lblAlt" x="1190" y="470">alt: windlass + pulley (Casanova 2017)</text>
   <text class="lbl" x="1220" y="380">wheels [I]: scholia</text>
   <text class="lbl" x="1220" y="400">on Ach. 408</text>
   <text class="sm" x="1220" y="420">4 solid wheels, ~0.3 m deck [R1]</text>
 
   <!-- ============ PANEL 3: PLAN (30 px = 1 m) ============ -->
-  <text class="h" x="40" y="690">3 · Plan from above</text>
-  <text class="sm" x="40" y="708">Scale 30 px = 1 m</text>
-  <rect x="190" y="720" width="420" height="40" fill="#e3d6c3" stroke="#1d1a17" stroke-width="1"/>
-  <text class="sm" x="200" y="740">backstage</text>
+  <text class="h" x="40" y="660">3 · Plan from above</text>
+  <text class="sm" x="40" y="678">Scale 30 px = 1 m</text>
+  <rect x="250" y="650" width="300" height="110" fill="#e3d6c3" stroke="#1d1a17" stroke-width="1"/>
+  <text class="sm" x="258" y="668">backstage</text>
   <!-- facade wall with door gap -->
   <rect class="wood" x="190" y="760" width="168" height="9"/>
   <rect class="wood" x="442" y="760" width="168" height="9"/>
   <!-- platform in / out -->
-  <rect class="deck" x="364" y="712" width="72" height="48"/>
-  <rect class="deckghost" x="364" y="766" width="72" height="48"/>
-  <path class="arrow" d="M470,736 L470,800"/>
+  <rect class="deck" x="364" y="662" width="72" height="48"/>
+  <rect class="deckghost" x="364" y="759" width="72" height="48"/>
+  <path class="arrow" d="M470,680 L470,800"/>
   <!-- alt: turntable semicircle -->
   <path class="alt" d="M358,764 A42,42 0 0 0 442,764"/>
     <text class="lblAlt" x="490" y="800">alt: turntable pivoting</text><text class="lblAlt" x="490" y="818">in the doorway (Exon 1900;</text><text class="lblAlt" x="490" y="836">Flickinger 1918)</text>

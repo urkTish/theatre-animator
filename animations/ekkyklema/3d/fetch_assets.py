@@ -84,6 +84,9 @@ def main():
         n += fetch(g["url"], os.path.join(root, os.path.basename(g["url"])), g.get("md5"))
         for rel, inc in g.get("include", {}).items():
             n += fetch(inc["url"], os.path.join(root, rel), inc.get("md5"))
+        # the glTF points its alpha at the JPG diffuse (no alpha channel): fetch the alpha map
+        a = files["Alpha"]["1k"]["png"]
+        n += fetch(a["url"], os.path.join(root, "textures", os.path.basename(a["url"])), a.get("md5"))
     print(f"assets ready in {cache} ({n} files downloaded)")
 
 
