@@ -34,6 +34,10 @@ import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 try:
+    sys.stdout.reconfigure(line_buffering=True)
+except Exception:
+    pass
+try:
     import bpy
     import bmesh
     from mathutils import Matrix, Quaternion, Vector, noise
@@ -353,10 +357,10 @@ if IN_BLENDER:
     FIGURES = {
         "Standing actor": dict(macro=dict(gender=1.0, age=0.62, muscle=0.55, weight=0.5, height=0.5, proportions=0.7),
                                race=dict(caucasian=0.85, african=0.1, asian=0.05), skin="middleage_caucasian_male",
-                               tan=(0.42, 0.26, 0.15), hair=None, eyes=False),
+                               tan=(0.42, 0.26, 0.15), hair="bob01", eyes=False, hair_col=(0.035, 0.028, 0.022)),
         "Reclining actor": dict(macro=dict(gender=0.9, age=0.45, muscle=0.42, weight=0.45, height=0.52, proportions=0.75),
                                 race=dict(caucasian=0.9, african=0.05, asian=0.05), skin="young_caucasian_male",
-                                tan=(0.46, 0.30, 0.18), hair=None, eyes=False),
+                                tan=(0.46, 0.30, 0.18), hair="long01", eyes=False, hair_col=(0.075, 0.048, 0.03)),
         "Stagehand A": dict(macro=dict(gender=1.0, age=0.45, muscle=0.7, weight=0.45, height=0.38, proportions=0.5),
                             race=dict(caucasian=0.75, african=0.2, asian=0.05), skin="young_caucasian_male",
                             tan=(0.36, 0.21, 0.12), hair="short02", eyes=True, brows="eyebrow001"),
@@ -378,6 +382,79 @@ if IN_BLENDER:
                     if "Roughness" in ins:
                         ins["Roughness"].default_value = 0.5
 
+
+    # ==========================================================================
+    # our own shaders on the CC0 MakeHuman textures (MPFB's node groups are not used,
+    # so no GPL-covered node data ends up in the scene)
+    # ==========================================================================
+    def mhmat_texture(mhmat):
+        with open(mhmat) as f:
+            for line in f:
+                if line.startswith("diffuseTexture"):
+                    return os.path.join(os.path.dirname(mhmat), line.split(None, 1)[1].strip())
+        return None
+
+    def mat_textured(name, tex, tint=(1, 1, 1), tint_fac=0.0, rough=0.5, alpha=False, sss=0.0, spec=0.4, bump=0.0):
+        m = bpy.data.materials.new(name)
+        m.use_nodes = True
+        nt = m.node_tree
+        bs = nt.nodes["Principled BSDF"]
+        it = nt.nodes.new("ShaderNodeTexImage")
+        it.image = bpy.data.images.load(tex, check_existing=True)
+        col = it.outputs["Color"]
+        if tint_fac > 0:
+            mx = nt.nodes.new("ShaderNodeMix")
+            mx.data_type = "RGBA"
+            mx.blend_type = "MULTIPLY"
+            mx.inputs["Factor"].default_value = tint_fac
+            mx.inputs[7].default_value = (*tint, 1.0)
+            nt.links.new(col, mx.inputs[6])
+            col = mx.outputs[2]
+        nt.links.new(col, bs.inputs["Base Color"])
+        if alpha:
+            nt.links.new(it.outputs["Alpha"], bs.inputs["Alpha"])
+        bs.inputs["Roughness"].default_value = rough
+        bs.inputs["Specular IOR Level"].default_value = spec
+        if sss:
+            bs.inputs["Subsurface Weight"].default_value = sss
+            bs.inputs["Subsurface Radius"].default_value = (1.0, 0.4, 0.22)
+            bs.inputs["Subsurface Scale"].default_value = 0.006
+            nt.links.new(col, bs.inputs["Base Color"])
+        if bump:
+            tc = nt.nodes.new("ShaderNodeTexCoord")
+            nz = nt.nodes.new("ShaderNodeTexNoise")
+            nz.inputs["Scale"].default_value = 900.0
+            nz.inputs["Detail"].default_value = 3.0
+            nt.links.new(tc.outputs["Object"], nz.inputs["Vector"])
+            bp = nt.nodes.new("ShaderNodeBump")
+            bp.inputs["Strength"].default_value = bump
+            bp.inputs["Distance"].default_value = 0.0005
+            nt.links.new(nz.outputs["Fac"], bp.inputs["Height"])
+            nt.links.new(bp.outputs["Normal"], bs.inputs["Normal"])
+        return m
+
+    def set_only_material(ob, m):
+        me = ob.data
+        me.materials.clear()
+        me.materials.append(m)
+        for p in me.polygons:
+            p.material_index = 0
+
+    def own_materials(name, spec, body, assets, ud):
+        skin = mat_textured(name + " skin", mhmat_texture(os.path.join(ud, "skins", spec["skin"], spec["skin"] + ".mhmat")),
+                            tint=spec["tan"], tint_fac=0.55, rough=0.48, sss=0.12, spec=0.4, bump=0.08)
+        set_only_material(body, skin)
+        for a in assets:
+            src = a.name.split(".")[-1].lower()
+            if "eye" in src and "brow" not in src.lower() and "lash" not in src.lower():
+                set_only_material(a, mat_textured(name + " eyes", os.path.join(ud, "eyes/materials/brown_eye.png"), rough=0.12, spec=0.6))
+            else:
+                folder = next((d for d in ("hair", "eyebrows", "eyelashes") if os.path.exists(os.path.join(ud, d, src, src + ".mhmat"))), None)
+                if folder:
+                    tex = mhmat_texture(os.path.join(ud, folder, src, src + ".mhmat"))
+                    col = spec.get("hair_col", (0.05, 0.035, 0.025))
+                    set_only_material(a, mat_textured(name + " " + src, tex, tint=col, tint_fac=1.0, rough=0.55, alpha=True, spec=0.3))
+
     def make_human(name, spec):
         HS, LS, TS, RS = mpfb()
         macro = TS.get_default_macro_info_dict()
@@ -386,11 +463,10 @@ if IN_BLENDER:
         body = HS.create_human(macro_detail_dict=macro)
         rig = HS.add_builtin_rig(body, "default")
         ud = LS.get_user_data()
-        HS.set_character_skin(os.path.join(ud, "skins", spec["skin"], spec["skin"] + ".mhmat"), body, skin_type="ENHANCED_SSS")
         assets = []
         if spec.get("eyes"):
             assets.append(HS.add_mhclo_asset(os.path.join(ud, "eyes/high-poly/high-poly.mhclo"), body, asset_type="Eyes",
-                                             subdiv_levels=0, material_type="PROCEDURAL_EYES"))
+                                             subdiv_levels=0, material_type="MAKESKIN"))
             assets.append(HS.add_mhclo_asset(os.path.join(ud, "eyebrows", spec["brows"], spec["brows"] + ".mhclo"), body,
                                              asset_type="Eyebrows", subdiv_levels=0, material_type="MAKESKIN"))
             assets.append(HS.add_mhclo_asset(os.path.join(ud, "eyelashes/eyelashes02/eyelashes02.mhclo"), body,
@@ -398,7 +474,10 @@ if IN_BLENDER:
         if spec.get("hair"):
             assets.append(HS.add_mhclo_asset(os.path.join(ud, "hair", spec["hair"], spec["hair"] + ".mhclo"), body,
                                              asset_type="Hair", subdiv_levels=0, material_type="MAKESKIN"))
-        tint_skin(body, spec["tan"])
+        assets = [a for a in assets if a is not None]
+        for a in assets:
+            a["mh_source"] = a.name.split(".")[-1].lower()
+        own_materials(name, spec, body, assets, ud)
         body.name = name + " body"
         rig.name = name + " rig"
         rig.data.name = name + " rig"
@@ -500,8 +579,8 @@ if IN_BLENDER:
             P.fingers(side, {2: (40, 55, 35), 3: (48, 60, 38), 4: (52, 62, 40), 5: (55, 64, 42)},
                       spread={2: -2, 3: 0, 4: 2, 5: 4}, thumb=((18, 0, 10), 25, 20))
         elif kind == "speak":          # rhetorical gesture: index + middle up, ring and little folded
-            P.fingers(side, {2: (2, 4, 2), 3: (6, 8, 4), 4: (60, 75, 45), 5: (65, 80, 45)},
-                      spread={2: -5, 3: 2, 4: 4, 5: 6}, thumb=((5, 0, -20), 10, 10))
+            P.fingers(side, {2: (0, 3, 2), 3: (8, 12, 6), 4: (26, 34, 18), 5: (36, 44, 24)},
+                      spread={2: -6, 3: 0, 4: 5, 5: 10}, thumb=((0, 0, -18), 6, 8))
         elif kind == "push":           # palm flat on the wood, fingers spread
             P.fingers(side, {2: (-4, 6, 4), 3: (-4, 6, 4), 4: (-2, 8, 5), 5: (0, 8, 6)},
                       spread={2: -6, 3: 0, 4: 5, 5: 11}, thumb=((0, 0, -22), 4, 6))
@@ -585,7 +664,7 @@ if IN_BLENDER:
     def pose_stagehand(P, rig, x, lead="L", var=0.0):
         """crouched behind the platform's rear rail, staggered feet, hands flat on the rail top,
         pushing; lead = the foot that is forward"""
-        g = V((x, REAR - 0.62, 0.0))
+        g = V((x, REAR - 0.70, 0.0))
         place_rig(rig, g, (0, 1, 0))
         B = Frame(g, (0, 0, 1), (0, 1, 0))
         P.reset()
@@ -619,6 +698,850 @@ if IN_BLENDER:
         for t in ("toe1-1.", "toe2-1.", "toe3-1.", "toe4-1.", "toe5-1."):
             P.aim(t + back, B.d(0, 1, -0.05), (0, 0, -1), (0, 0, -1))
         return B
+
+
+    # ==========================================================================
+    # garments: cut for the T-pose rest (arms horizontal), pinned along the
+    # shoulder/arm seam and at the girdle, then simulated from the T-pose into
+    # the final pose with the body as a collider, and frozen
+    # ==========================================================================
+    def body_rest_points(body):
+        """rest-pose coordinates of the real body vertices (not the MakeHuman helper geometry)"""
+        gi = body.vertex_groups["body"].index
+        pts = []
+        for v in body.data.vertices:
+            for g in v.groups:
+                if g.group == gi and g.weight > 0.5:
+                    pts.append(v.co.copy())
+                    break
+        return pts
+
+    def slice_extent(pts, z0, z1, xlim=0.25):
+        xs = [p.x for p in pts if z0 <= p.z <= z1 and abs(p.x) < xlim]
+        ys = [p.y for p in pts if z0 <= p.z <= z1 and abs(p.x) < xlim]
+        return min(xs), max(xs), min(ys), max(ys)
+
+    def store_rest_coords(body):
+        at = body.data.attributes.get("rest_co") or body.data.attributes.new("rest_co", "FLOAT_VECTOR", "POINT")
+        at.data.foreach_set("vector", [c for v in body.data.vertices for c in v.co])
+
+    def copy_weights(garment, body, pts_idx=None, k=4):
+        """nearest-body-vertex weights (inverse-distance blend of k neighbours)"""
+        from mathutils.kdtree import KDTree
+        gi = body.vertex_groups["body"].index
+        bverts = [v for v in body.data.vertices if any(g.group == gi and g.weight > 0.5 for g in v.groups)]
+        kd = KDTree(len(bverts))
+        for i, v in enumerate(bverts):
+            kd.insert(v.co, i)
+        kd.balance()
+        bone_names = set(b.name for b in body.parent.data.bones)
+        gname = {g.index: g.name for g in body.vertex_groups if g.name in bone_names}
+        acc = {}
+        for gv in garment.data.vertices:
+            res = kd.find_n(gv.co, k)
+            tot = 0.0
+            w = {}
+            for co, i, d in res:
+                f = 1.0 / max(d, 1e-4) ** 2
+                tot += f
+                for g in bverts[i].groups:
+                    if g.group in gname:
+                        w[gname[g.group]] = w.get(gname[g.group], 0.0) + f * g.weight
+            for n, val in w.items():
+                acc.setdefault(n, []).append((gv.index, val / tot))
+        for n, lst in acc.items():
+            vg = garment.vertex_groups.get(n) or garment.vertex_groups.new(name=n)
+            for idx, val in lst:
+                if val > 0.01:
+                    vg.add([idx], val, "REPLACE")
+
+    def make_garment(name, rig, body, mat_name, xw, z_hem, res=0.024, margin=0.055, neck_hw=0.095,
+                     waist=True, sleeve_drop=0.0):
+        pts = body_rest_points(body)
+        rb = {b.name: b for b in rig.data.bones}
+        sh_L = rb["upperarm01.L"].head_local
+        z_arm_top = max(p.z for p in pts if 0.22 < p.x < 0.30)            # top of the upper arm
+        z_top = z_arm_top + 0.018
+        y_sh = sh_L.y
+        z_armpit = min(p.z for p in pts if 0.17 < p.x < 0.21 and p.z > 1.0 and abs(p.y - y_sh) < 0.05) - 0.02
+        z_armpit = max(z_armpit, z_top - 0.17)            # keep the arm opening modest
+        x0, x1, ch_f, ch_b = slice_extent(pts, 1.20, 1.42, 0.17)
+        _, _, hp_f, hp_b = slice_extent(pts, 0.80, 0.98, 0.20)
+        yf = min(ch_f, hp_f) - margin
+        yb = max(ch_b, hp_b) + margin
+        yc = 0.5 * (yf + yb)
+        z_waist = rb["spine04"].head_local.z + 0.01
+        wx0, wx1, wy0, wy1 = slice_extent(pts, z_waist - 0.015, z_waist + 0.015, 0.2)
+        wa, wb, wyc = (wx1 - wx0) / 2 + 0.012, (wy1 - wy0) / 2 + 0.012, (wy0 + wy1) / 2
+        depth = yb - yf
+        nf = max(8, int(round(2 * xw / res)))
+        ns = max(4, int(round(depth / res)))
+        loop = []                                            # (x, y, kind)  kind: F front, S side, B back
+        for i in range(nf):
+            loop.append((xw - 2 * xw * i / nf, yf, "F"))
+        for i in range(ns):
+            loop.append((-xw, yf + depth * i / ns, "S"))
+        for i in range(nf):
+            loop.append((-xw + 2 * xw * i / nf, yb, "B"))
+        for i in range(ns):
+            loop.append((xw, yb - depth * i / ns, "S"))
+        nc = len(loop)
+        nr = max(8, int(round((z_top - z_hem) / res)))
+        h_yoke = 0.20
+        verts, rest, pin, kinds = [], [], [], []
+        for r in range(nr + 1):
+            z = z_top - (z_top - z_hem) * r / nr
+            for (x, y, kd) in loop:
+                yy = y
+                if z > z_top - h_yoke and kd != "S":
+                    prof = 0.5 - 0.5 * math.cos(math.pi * (z - (z_top - h_yoke)) / h_yoke)
+                    c = smoothstep(neck_hw, neck_hw + 0.07, abs(x))
+                    yy = y + (y_sh - y) * c * prof ** 1.6
+                p_rest = V((x, yy, z))
+                p = p_rest.copy()
+                wpin = 0.0
+                if waist and abs(z - z_waist) < 0.13:
+                    th = math.atan2(yy - yc, x)
+                    ell = V((wa * math.cos(th), wyc + wb * math.sin(th), z))
+                    wgt = 1.0 - smoothstep(0.012, 0.13, abs(z - z_waist))
+                    p = p_rest.lerp(ell, wgt)
+                    if abs(z - z_waist) < 0.013:
+                        wpin = 1.0
+                if r == 0 and kd != "S" and smoothstep(neck_hw, neck_hw + 0.07, abs(x)) > 0.98:
+                    wpin = 1.0
+                verts.append(p)
+                rest.append(p_rest)
+                pin.append(wpin)
+                kinds.append(kd)
+        faces = []
+        for r in range(nr):
+            z = z_top - (z_top - z_hem) * (r + 0.5) / nr
+            for c in range(nc):
+                a, b = r * nc + c, r * nc + (c + 1) % nc
+                side = kinds[a] == "S" or kinds[b] == "S"
+                if side and z > z_armpit:
+                    # open side seam above the armpit (both edges of a side column)
+                    if kinds[a] == "S" or (kinds[b] == "S"):
+                        continue
+                faces.append((a, b, b + nc, a + nc))
+        me = bpy.data.meshes.new(name)
+        me.from_pydata([tuple(v) for v in verts], [], faces)
+        ob = bpy.data.objects.new(name, me)
+        bpy.context.scene.collection.objects.link(ob)
+        # rest shape key and pins, then sew the shoulder seam (front/back top rows coincide)
+        ob.shape_key_add(name="Basis")
+        sk = ob.shape_key_add(name="rest")
+        for i, p in enumerate(rest):
+            sk.data[i].co = p
+        vg = ob.vertex_groups.new(name="pin")
+        for i, w in enumerate(pin):
+            if w > 0:
+                vg.add([i], w, "REPLACE")
+        bm = bmesh.new()
+        bm.from_mesh(me)
+        bm.verts.ensure_lookup_table()
+        top = [bm.verts[i] for i in range(nc) if kinds[i] != "S"]
+        bmesh.ops.remove_doubles(bm, verts=top, dist=0.004)
+        loose = [v for v in bm.verts if not v.link_faces]
+        bmesh.ops.delete(bm, geom=loose, context="VERTS")
+        bm.to_mesh(me)
+        bm.free()
+        ob.parent = rig
+        ob.matrix_parent_inverse = Matrix.Identity(4)
+        me.materials.append(bpy.data.materials.get(mat_name) or bpy.data.materials.new(mat_name))
+        for poly in me.polygons:
+            poly.use_smooth = True
+        copy_weights(ob, body)
+        am = ob.modifiers.new("Armature", "ARMATURE")
+        am.object = rig
+        info = dict(z_top=z_top, z_waist=z_waist, z_armpit=z_armpit, yf=yf, yb=yb, nverts=len(me.vertices))
+        print("GARMENT", name, {k: round(v, 3) if isinstance(v, float) else v for k, v in info.items()})
+        return ob, info
+
+    def add_cloth(ob, colliders_coll, frames, pin="pin", mass=0.25, tension=15.0, bend=0.5, shear=5.0,
+                  quality=6, self_coll=True, air=1.5, rest_key="rest"):
+        md = ob.modifiers.new("Cloth", "CLOTH")
+        st = md.settings
+        st.quality = quality
+        st.mass = mass
+        st.tension_stiffness = tension
+        st.compression_stiffness = tension
+        st.shear_stiffness = shear
+        st.bending_stiffness = bend
+        st.air_damping = air
+        st.tension_damping = 5.0
+        st.compression_damping = 5.0
+        st.shear_damping = 5.0
+        if pin:
+            st.vertex_group_mass = pin
+            st.pin_stiffness = 1.0
+        if rest_key and ob.data.shape_keys and rest_key in ob.data.shape_keys.key_blocks:
+            st.rest_shape_key = ob.data.shape_keys.key_blocks[rest_key]
+        cs = md.collision_settings
+        cs.collision_quality = 3
+        cs.distance_min = 0.005
+        cs.use_self_collision = self_coll
+        cs.self_distance_min = 0.004
+        cs.self_friction = 3.0
+        cs.collection = colliders_coll
+        md.point_cache.frame_start = 1
+        md.point_cache.frame_end = frames
+        return md
+
+    def make_collider(ob, thick=0.007, friction=5.0):
+        if not any(m.type == "COLLISION" for m in ob.modifiers):
+            ob.modifiers.new("Collision", "COLLISION")
+        ob.collision.thickness_outer = thick
+        ob.collision.thickness_inner = 0.02
+        ob.collision.cloth_friction = friction
+        ob.collision.damping = 0.5
+
+    def freeze(ob, keep_mats=True):
+        """replace an object's data by its evaluated mesh (current frame) and drop its modifiers"""
+        dg = bpy.context.evaluated_depsgraph_get()
+        ev = ob.evaluated_get(dg)
+        me = bpy.data.meshes.new_from_object(ev, preserve_all_data_layers=True, depsgraph=dg)
+        mw = ob.matrix_world.copy()
+        old = ob.data
+        ob.modifiers.clear()
+        if ob.data.shape_keys:
+            ob.shape_key_clear()
+        ob.data = me
+        if keep_mats:
+            me.materials.clear()
+            for m in old.materials:
+                me.materials.append(m)
+        ob.parent = None
+        ob.matrix_world = mw
+        ob.vertex_groups.clear()
+        return ob
+
+
+    GARMENTS = {
+        # figure: (garment name, material, half-width (sleeve reach) m, hem height m, cloth params)
+        "Standing actor": ("chiton", "Chiton undyed wool", 0.44, 0.035, dict(mass=0.22, bend=0.35, tension=14.0)),
+        "Reclining actor": ("chiton", "Chiton saffron", 0.36, 0.05, dict(mass=0.22, bend=0.35, tension=14.0)),
+        "Stagehand A": ("tunic", "Stagehand tunic (dark wool)", 0.25, 0.50, dict(mass=0.3, bend=1.5, tension=18.0)),
+        "Stagehand B": ("tunic", "Stagehand tunic (dark wool)", 0.25, 0.49, dict(mass=0.3, bend=1.5, tension=18.0)),
+    }
+    T_SETTLE, T_MOVE, T_END = 12, 52, 76          # cloth timeline (frames)
+
+    def transition_keys(name, fig):
+        """keyframe the rig: rest (T-pose) -> final pose; the reclining figure starts upright
+        above the couch and lies down late, so the cloth never meets the couch from inside"""
+        rig, P, final = fig["rig"], fig["poser"], fig["final"]
+        start = {n: Matrix.Identity(4) for n in final}
+        seq = [(1, start), (T_SETTLE, start)]
+        if name == "Reclining actor":
+            to_root = P.rest["root"].to_3x3().normalized().inverted() @ P.inv_w.to_3x3().normalized()
+            lift = Matrix.Translation(to_root @ V((0, 0, 1.15)))
+            start = {n: Matrix.Identity(4) for n in final}
+            start["root"] = lift
+            seq = [(1, start), (T_SETTLE, start)]
+            mid = {}
+            for n, m in final.items():
+                loc, q, _ = m.decompose()
+                mid[n] = Matrix.Translation(loc * 0.85) @ Quaternion().slerp(q, 0.85).to_matrix().to_4x4()
+            # root: rotated 85 %, still lifted 0.35 m above its final place
+            loc, q, _ = final["root"].decompose()
+            lift2 = to_root @ V((0, 0, 0.35))
+            mid["root"] = Matrix.Translation(loc * 0.85 + lift2) @ Quaternion().slerp(q, 0.85).to_matrix().to_4x4()
+            seq += [(T_MOVE - 10, mid), (T_MOVE, final), (T_END, final)]
+        else:
+            seq += [(T_MOVE, final), (T_END, final)]
+        key_pose_sequence(rig, seq)
+
+    def simulate_garments(figs, ctx_colliders):
+        sc = bpy.context.scene
+        sc.frame_start, sc.frame_end = 1, T_END
+        cloths = []
+        for name, fig in figs.items():
+            gname, mat, xw, hem, prm = GARMENTS[name]
+            rig, body = fig["rig"], fig["body"]
+            P = fig["poser"]
+            # jaw open for the masked actors (the mask is moulded on the open mouth)
+            if name in ("Standing actor", "Reclining actor"):
+                fig["final"]["jaw"] = Matrix.Rotation(math.radians(14), 4, "X")
+            # garments are cut in rest (T-pose): show the rest pose while building them
+            rig.data.pose_position = "REST"
+            bpy.context.view_layer.update()
+            store_rest_coords(body)
+            g, info = make_garment(f"{name} {gname}", rig, body, mat, xw, hem)
+            fig["garment"], fig["ginfo"] = g, info
+            rig.data.pose_position = "POSE"
+            transition_keys(name, fig)
+            cc = get_coll(f"COL {name}")
+            cc.hide_render = True
+            make_collider(body, thick=0.006)
+            if body.name not in cc.objects:
+                cc.objects.link(body)
+            for o in ctx_colliders.get(name, []):
+                make_collider(o, thick=0.006)
+                if o.name not in cc.objects:
+                    cc.objects.link(o)
+            add_cloth(g, cc, T_END, **prm)
+            cloths.append(g)
+        t0 = time.time()
+        for f in range(1, T_END + 1):
+            sc.frame_set(f)
+            if f % 10 == 0:
+                print("  cloth frame", f, "%.1fs" % (time.time() - t0))
+        print("CLOTH SIM %.1fs" % (time.time() - t0))
+        return cloths
+
+
+    # ==========================================================================
+    # tragic masks: moulded on the posed MakeHuman face (mouth open), enlarged and
+    # idealised, with eye and mouth openings, painted features, a dark lining, and
+    # an attached wig (MakeHuman CC0 hair, enlarged with the mask)
+    # ==========================================================================
+    def mat_simple(name, color, rough=0.6, spec=0.3, bump=0.0, bump_scale=60.0, attr=None):
+        m = bpy.data.materials.get(name)
+        if m:
+            return m
+        m = bpy.data.materials.new(name)
+        m.use_nodes = True
+        nt = m.node_tree
+        bs = nt.nodes["Principled BSDF"]
+        bs.inputs["Base Color"].default_value = (*color, 1)
+        bs.inputs["Roughness"].default_value = rough
+        bs.inputs["Specular IOR Level"].default_value = spec
+        if attr:
+            at = nt.nodes.new("ShaderNodeAttribute")
+            at.attribute_name = attr
+            nt.links.new(at.outputs["Color"], bs.inputs["Base Color"])
+        if bump:
+            tc = nt.nodes.new("ShaderNodeTexCoord")
+            nz = nt.nodes.new("ShaderNodeTexNoise")
+            nz.inputs["Scale"].default_value = bump_scale
+            nz.inputs["Detail"].default_value = 6.0
+            nt.links.new(tc.outputs["Object"], nz.inputs["Vector"])
+            bp = nt.nodes.new("ShaderNodeBump")
+            bp.inputs["Strength"].default_value = bump
+            bp.inputs["Distance"].default_value = 0.001
+            nt.links.new(nz.outputs["Fac"], bp.inputs["Height"])
+            nt.links.new(bp.outputs["Normal"], bs.inputs["Normal"])
+        return m
+
+    def head_refs(rig):
+        rb = rig.data.bones
+        eL, eR = rb["eye.L"].head_local, rb["eye.R"].head_local
+        return dict(eL=eL.copy(), eR=eR.copy(), ez=0.5 * (eL.z + eR.z), ey=0.5 * (eL.y + eR.y),
+                    hz=rb["head"].head_local.z)
+
+    def build_mask(name, fig, paint, hair_col, scale=1.11, beard=False):
+        """fig['body'] must already be frozen in the final pose (it carries 'rest_co')"""
+        body, rig, P = fig["body"], fig["rig"], fig["poser"]
+        H = head_refs(rig)
+        ez, ey, ex = H["ez"], H["ey"], abs(H["eL"].x)
+        mz = ez - 0.068                     # mouth line (rest)
+        me = body.data
+        rest = [V(d.vector) for d in me.attributes["rest_co"].data]
+        # posed head frame: centre of scaling
+        Mh = rig.matrix_world @ P.P("head")
+        hc = Mh @ V((0.0, 0.02, 0.0))       # a little up the head bone from its head
+        hc = Mh.translation + (Mh.to_3x3().normalized() @ V((0, 1, 0))) * 0.045
+
+        def in_face(p):
+            return (p.x / 0.086) ** 2 + ((p.z - (ez - 0.012)) / 0.124) ** 2 < 1.0 and p.y < ey + 0.072
+
+        def eye_hole(p):
+            return any(((p.x - sx * ex) / 0.0165) ** 2 + ((p.z - ez) / 0.0105) ** 2 < 1.0 for sx in (1, -1)) or \
+                (any(((p.x - sx * ex) / 0.021) ** 2 + ((p.z - ez) / 0.014) ** 2 < 1.0 for sx in (1, -1)) and p.y > ey + 0.004)
+
+        def mouth_hole(p):
+            return ((p.x / 0.024) ** 2 + ((p.z - mz) / 0.013) ** 2 < 1.0) or \
+                (abs(p.x) < 0.03 and mz - 0.035 < p.z < mz + 0.02 and p.y > ey + 0.012)
+
+        bm = bmesh.new()
+        bm.from_mesh(me)
+        bm.verts.ensure_lookup_table()
+        keep = set()
+        for f in bm.faces:
+            if all(in_face(rest[v.index]) for v in f.verts):
+                keep.add(f.index)
+        bmesh.ops.delete(bm, geom=[f for f in bm.faces if f.index not in keep], context="FACES")
+        # keep the largest connected piece only
+        bm.faces.ensure_lookup_table()
+        rest_l = bm.verts.layers.float_vector.get("rest_co")
+        def rco(v):
+            return V(v[rest_l]) if rest_l else rest[v.index]
+        # enlarge about the head centre, push out a little, smooth (idealise)
+        for v in bm.verts:
+            v.co = hc + (v.co - hc) * scale
+        bm.normal_update()
+        for v in bm.verts:
+            v.co += v.normal * 0.004
+        for _ in range(4):
+            bmesh.ops.smooth_vert(bm, verts=[v for v in bm.verts if not v.is_boundary], factor=0.5,
+                                  use_axis_x=True, use_axis_y=True, use_axis_z=True)
+        # lining (no openings) slightly inside: seen through the eye and mouth holes as darkness
+        lining = bm.copy()
+        for v in lining.verts:
+            v.co = hc + (v.co - hc) * 0.955
+        # openings
+        holes = [f for f in bm.faces if any(eye_hole(rco(v)) or mouth_hole(rco(v)) for v in f.verts)]
+        bmesh.ops.delete(bm, geom=holes, context="FACES")
+        loose = [v for v in bm.verts if not v.link_faces]
+        bmesh.ops.delete(bm, geom=loose, context="VERTS")
+        # painted features as a colour attribute
+        base = V(paint)
+        col_l = bm.verts.layers.float_color.new("paint")
+        for v in bm.verts:
+            p = rco(v)
+            c = base.copy()
+            dx = min(abs(p.x - ex), abs(p.x + ex))
+            # cheeks: faint warm flush
+            ck = math.exp(-((dx - 0.012) / 0.02) ** 2 - ((p.z - (ez - 0.035)) / 0.018) ** 2)
+            c = c.lerp(V((0.62, 0.36, 0.28)), 0.25 * ck)
+            # brows: dark arcs
+            bz = ez + 0.021 - 0.25 * (abs(p.x) - ex) ** 2 / 0.02
+            br = math.exp(-((p.z - bz) / 0.0045) ** 2) * (1.0 - smoothstep(0.022, 0.034, dx)) * (1 if abs(p.x) > 0.008 else 0)
+            c = c.lerp(V((0.06, 0.04, 0.03)), min(1.0, 1.2 * br))
+            # dark rims round the eye holes
+            er = math.exp(-(((dx) / 0.022) ** 2 + ((p.z - ez) / 0.0145) ** 2) * 2.0)
+            c = c.lerp(V((0.10, 0.07, 0.05)), 0.75 * er)
+            # red-ochre lips round the open mouth
+            lp = math.exp(-((p.x / 0.033) ** 2 + ((p.z - mz) / 0.019) ** 2) * 2.2)
+            c = c.lerp(V((0.42, 0.13, 0.09)), 0.85 * lp)
+            v[col_l] = (*c, 1.0)
+        mm = bpy.data.meshes.new(name + " mask")
+        bm.to_mesh(mm)
+        bm.free()
+        mask = bpy.data.objects.new(name + " mask", mm)
+        mm.materials.append(mat_simple("MH mask paint (gesso)", paint, rough=0.55, spec=0.35, bump=0.15, bump_scale=90.0, attr="paint"))
+        for poly in mm.polygons:
+            poly.use_smooth = True
+        sd = mask.modifiers.new("Solidify", "SOLIDIFY")
+        sd.thickness = 0.005
+        sd.offset = -1.0
+        sd.use_rim = True
+        ss = mask.modifiers.new("Subsurf", "SUBSURF")
+        ss.levels, ss.render_levels = 1, 2
+        ml = bpy.data.meshes.new(name + " mask lining")
+        lining.to_mesh(ml)
+        lining.free()
+        lin = bpy.data.objects.new(name + " mask lining", ml)
+        ml.materials.append(mat_simple("MH mask lining (dark)", (0.006, 0.005, 0.004), rough=0.95, spec=0.05))
+        out = [mask, lin]
+        # wig: the MakeHuman hair, frozen in the pose and enlarged with the mask
+        for a in fig["assets"]:
+            if a.name.endswith(("long01", "bob01", "bob02", "short01", "short02", "short03", "short04", "ponytail01", "braid01", "afro01")):
+                for v in a.data.vertices:
+                    w = a.matrix_world @ v.co
+                    v.co = a.matrix_world.inverted() @ (hc + (w - hc) * (scale + 0.02))
+                a.name = name + " wig"
+        if beard:
+            out.append(build_beard(name, mask, H, hair_col))
+        return out
+
+    def tint_hair(ob, col):
+        for m in ob.data.materials:
+            if not m or not m.node_tree:
+                continue
+            nt = m.node_tree
+            bs = next((n for n in nt.nodes if n.type == "BSDF_PRINCIPLED"), None)
+            if not bs:
+                continue
+            lk = bs.inputs["Base Color"].links
+            if lk:
+                src = lk[0].from_socket
+                mx = nt.nodes.new("ShaderNodeMix")
+                mx.data_type = "RGBA"
+                mx.blend_type = "MULTIPLY"
+                mx.inputs["Factor"].default_value = 1.0
+                mx.inputs[7].default_value = (*col, 1.0)
+                nt.links.new(src, mx.inputs[6])
+                nt.links.new(mx.outputs[2], bs.inputs["Base Color"])
+            else:
+                bs.inputs["Base Color"].default_value = (*col, 1.0)
+            bs.inputs["Roughness"].default_value = 0.6
+
+    def build_beard(name, mask, H, col):
+        """particle-hair beard on the lower mask (the wig-maker's beard, attached to the mask)"""
+        ez, ex = H["ez"], abs(H["eL"].x)
+        mz = ez - 0.068
+        me = mask.data
+        pl = me.attributes.get("paint")
+        bm = bmesh.new()
+        bm.from_mesh(me)
+        # emitter: the jaw / chin / upper-lip zone of the mask, picked by height below the eyes
+        zs = sorted(v.co.z for v in bm.verts)
+        bm.verts.ensure_lookup_table()
+        # use the mask's own geometry: lower 42 % of its height, minus the lips
+        z0, z1 = zs[0], zs[-1]
+        zc = z0 + 0.42 * (z1 - z0)
+        dele = [f for f in bm.faces if f.calc_center_median().z > zc]
+        bmesh.ops.delete(bm, geom=dele, context="FACES")
+        bm.normal_update()
+        em_me = bpy.data.meshes.new(name + " beard emitter")
+        bm.to_mesh(em_me)
+        bm.free()
+        em = bpy.data.objects.new(name + " beard", em_me)
+        em.matrix_world = mask.matrix_world.copy()
+        hm = mat_hair_bsdf(name + " beard hair", col)
+        em_me.materials.append(hm)
+        ps = em.modifiers.new("Beard", "PARTICLE_SYSTEM").particle_system
+        st = ps.settings
+        st.type = "HAIR"
+        st.count = 900
+        st.hair_length = 0.055
+        st.emit_from = "FACE"
+        st.use_emit_random = True
+        st.normal_factor = 0.55
+        st.object_align_factor = (0.0, 0.0, -0.75)
+        st.child_type = "INTERPOLATED"
+        st.rendered_child_count = 14
+        for k, v in (("child_percent", 4), ("child_display_percent", 4), ("display_percentage", 100)):
+            if hasattr(st, k):
+                setattr(st, k, v)
+        st.clump_factor = 0.55
+        st.roughness_1 = 0.012
+        st.roughness_2 = 0.01
+        st.kink = "CURL"
+        st.kink_amplitude = 0.004
+        st.kink_frequency = 6.0
+        st.root_radius = 1.0
+        st.tip_radius = 0.25
+        st.radius_scale = 0.0008
+        em.show_instancer_for_render = False
+        return em
+
+    def mat_hair_bsdf(name, col):
+        m = bpy.data.materials.new(name)
+        m.use_nodes = True
+        nt = m.node_tree
+        nt.nodes.clear()
+        hb = nt.nodes.new("ShaderNodeBsdfHairPrincipled")
+        hb.parametrization = "COLOR"
+        hb.inputs["Color"].default_value = (*col, 1.0)
+        hb.inputs["Roughness"].default_value = 0.35
+        out = nt.nodes.new("ShaderNodeOutputMaterial")
+        nt.links.new(hb.outputs[0], out.inputs["Surface"])
+        return m
+
+    # ==========================================================================
+    # soft boots for the standing actor: a leather shell over the posed feet and ankles
+    # ==========================================================================
+    def build_boots(name, body):
+        me = body.data
+        rest = [V(d.vector) for d in me.attributes["rest_co"].data]
+        bm = bmesh.new()
+        bm.from_mesh(me)
+        dele = [f for f in bm.faces if not all(rest[v.index].z < 0.20 for v in f.verts)]
+        bmesh.ops.delete(bm, geom=dele, context="FACES")
+        bm.normal_update()
+        for v in bm.verts:
+            v.co += v.normal * 0.0035
+        mb = bpy.data.meshes.new(name + " boots")
+        bm.to_mesh(mb)
+        bm.free()
+        ob = bpy.data.objects.new(name + " boots", mb)
+        ob.matrix_world = body.matrix_world.copy()
+        mb.materials.append(bpy.data.materials.get("Soft leather boots") or mat_simple("Soft leather boots", (0.09, 0.06, 0.045), rough=0.6, bump=0.2, bump_scale=80))
+        for poly in mb.polygons:
+            poly.use_smooth = True
+        sd = ob.modifiers.new("Solidify", "SOLIDIFY")
+        sd.thickness = 0.002
+        ss = ob.modifiers.new("Subsurf", "SUBSURF")
+        ss.levels, ss.render_levels = 1, 1
+        return ob
+
+
+    # ==========================================================================
+    # second cloth pass on the frozen figures: the standing actor's himation (wrapped
+    # over the left shoulder, across the back, round the right hip, held in the left
+    # hand) and the blanket over the reclining figure
+    # ==========================================================================
+    def bvh_of(objs):
+        from mathutils.bvhtree import BVHTree
+        verts, polys = [], []
+        dg = bpy.context.evaluated_depsgraph_get()
+        for o in objs:
+            ev = o.evaluated_get(dg)
+            me = ev.to_mesh()
+            off = len(verts)
+            mw = o.matrix_world
+            verts += [mw @ v.co for v in me.vertices]
+            polys += [[off + i for i in p.vertices] for p in me.polygons]
+            ev.to_mesh_clear()
+        return BVHTree.FromPolygons(verts, polys)
+
+    def catmull(pts, t):
+        n = len(pts) - 1
+        x = max(0.0, min(n - 1e-6, t * n))
+        i = int(x)
+        u = x - i
+        p0, p1, p2, p3 = pts[max(i - 1, 0)], pts[i], pts[i + 1], pts[min(i + 2, n)]
+        return 0.5 * ((2 * p1) + (-p0 + p2) * u + (2 * p0 - 5 * p1 + 4 * p2 - p3) * u * u + (-p0 + 3 * p1 - 3 * p2 + p3) * u ** 3)
+
+    HIMATION = [
+        # (mode, a, b, width dir (l, f, u), half-width)   mode side: angle from front toward left, height
+        ("side", 22, 1.13, (1, 0, 0), 0.15),
+        ("side", 26, 1.36, (1, 0, 0), 0.15),
+        ("top", 0.15, 0.06, (1, 0, -0.25), 0.15),
+        ("top", 0.16, -0.06, (1, 0, -0.3), 0.15),
+        ("side", 158, 1.40, (0.95, 0, -0.3), 0.26),
+        ("side", 186, 1.17, (0.81, 0, -0.59), 0.40),
+        ("side", 236, 0.97, (0.45, 0, -0.9), 0.42),
+        ("side", 272, 0.87, (0, 0, -1), 0.42),
+        ("side", 320, 0.85, (0, 0, -1), 0.40),
+        ("side", 358, 0.87, (-0.1, 0, -1), 0.35),
+        ("side", 22, 0.95, (-0.25, 0, -1), 0.20),
+        ("hand", 0, 0, (-0.3, 0, -1), 0.06),
+    ]
+
+    def build_himation(name, fig, colliders, W=1.25, res=0.025):
+        B = fig["frame"]
+        P = fig["poser"]
+        bvh = bvh_of(colliders)
+        axis_o = P.head("root")
+        cs, ws, hws = [], [], []
+        for mode, a, b, w, hw in HIMATION:
+            if mode == "side":
+                phi = math.radians(a)
+                d = (B.Fw * math.cos(phi) + B.L * math.sin(phi)).normalized()
+                o = V((axis_o.x, axis_o.y, b)) + d * 1.2
+                hit = bvh.ray_cast(o, -d, 2.0)
+                p = hit[0] if hit[0] is not None else V((axis_o.x, axis_o.y, b)) + d * 0.25
+                c = p + d * 0.045
+            elif mode == "top":
+                o = B.p(a, b, 2.2)
+                hit = bvh.ray_cast(o, V((0, 0, -1)), 2.0)
+                c = (hit[0] if hit[0] is not None else B.p(a, b, 1.5)) + V((0, 0, 0.045))
+            else:
+                c = P.head("wrist.L") + B.U * 0.06 + B.Fw * 0.01
+            cs.append(c)
+            ws.append(B.d(*w))
+            hws.append(hw)
+        # resample along the path by arc length
+        dense = [catmull(cs, i / 400.0) for i in range(401)]
+        L = [0.0]
+        for i in range(1, len(dense)):
+            L.append(L[-1] + (dense[i] - dense[i - 1]).length)
+        total = L[-1]
+        nrows = int(total / res)
+        nw = int(W / res) + 1
+        verts, rest_co, pinw = [], [], []
+        k = 0
+        for r in range(nrows + 1):
+            s = total * r / nrows
+            while k < len(L) - 2 and L[k + 1] < s:
+                k += 1
+            t = (k + (s - L[k]) / max(1e-9, L[k + 1] - L[k])) / 400.0
+            c = catmull(cs, t)
+            c2 = catmull(cs, min(1.0, t + 0.002))
+            c1 = catmull(cs, max(0.0, t - 0.002))
+            tan = (c2 - c1).normalized()
+            x = t * (len(cs) - 1)
+            i0 = min(int(x), len(cs) - 2)
+            u = x - i0
+            w = ws[i0].lerp(ws[i0 + 1], u)
+            w = (w - tan * w.dot(tan)).normalized()
+            hw = hws[i0] + (hws[i0 + 1] - hws[i0]) * u
+            nrm = tan.cross(w).normalized()
+            radial = c - V((axis_o.x, axis_o.y, c.z))
+            if nrm.dot(radial) < 0 and c.z < 1.45:
+                nrm = -nrm
+            elif c.z >= 1.45 and nrm.z < 0:
+                nrm = -nrm
+            seg = W / (nw - 1)
+            proj = 2 * hw / (nw - 1)
+            amp = math.sqrt(max(0.0, seg * seg - proj * proj))
+            for j in range(nw):
+                tt = -1.0 + 2.0 * j / (nw - 1)
+                zig = (0.5 * amp) * (1 if j % 2 else -1) if amp > 0.002 else 0.0
+                verts.append(c + w * (tt * hw) + nrm * (zig + 0.5 * amp))
+                rest_co.append(V((tt * W / 2, s, 0.0)))
+                pin = 0.0
+                if r >= nrows - 2:
+                    pin = 1.0
+                pinw.append(pin)
+        faces = [(r * nw + j, r * nw + j + 1, (r + 1) * nw + j + 1, (r + 1) * nw + j) for r in range(nrows) for j in range(nw - 1)]
+        me = bpy.data.meshes.new(name + " himation")
+        me.from_pydata([tuple(v) for v in verts], [], faces)
+        ob = bpy.data.objects.new(name + " himation", me)
+        bpy.context.scene.collection.objects.link(ob)
+        ob.shape_key_add(name="Basis")
+        sk = ob.shape_key_add(name="rest")
+        for i, p in enumerate(rest_co):
+            sk.data[i].co = p
+        vg = ob.vertex_groups.new(name="pin")
+        for i, wgt in enumerate(pinw):
+            if wgt > 0:
+                vg.add([i], wgt, "REPLACE")
+        for poly in me.polygons:
+            poly.use_smooth = True
+        me.materials.append(bpy.data.materials.get("Himation woad") or bpy.data.materials.new("Himation woad"))
+        print("HIMATION rows %d x %d, path %.2f m" % (nrows + 1, nw, total))
+        return ob
+
+    def build_blanket(name, fig, colliders):
+        bvh = bvh_of(colliders[:2])
+        ztop = Z_MATT
+        for x in [i * 0.05 - 0.2 for i in range(20)]:
+            for y in [j * 0.05 - 0.6 for j in range(16)]:
+                hit = bvh.ray_cast(V((x, y, 2.5)), V((0, 0, -1)), 3.0)
+                if hit[0] is not None:
+                    ztop = max(ztop, hit[0].z)
+        nx, ny = 52, 70
+        w, h = 1.30, 1.75
+        verts = []
+        rot = Matrix.Rotation(math.radians(6), 3, "Z")
+        for j in range(ny + 1):
+            for i in range(nx + 1):
+                x, y = -w / 2 + w * i / nx, -h / 2 + h * j / ny
+                p = rot @ V((x, y, 0.0)) + V((0.42, 0.12, ztop + 0.04 + 0.015 * math.sin(x * 9) * math.cos(y * 7)))
+                verts.append(p)
+        faces = [(j * (nx + 1) + i, j * (nx + 1) + i + 1, (j + 1) * (nx + 1) + i + 1, (j + 1) * (nx + 1) + i) for j in range(ny) for i in range(nx)]
+        me = bpy.data.meshes.new(name + " blanket")
+        me.from_pydata([tuple(v) for v in verts], [], faces)
+        ob = bpy.data.objects.new(name + " blanket", me)
+        bpy.context.scene.collection.objects.link(ob)
+        for poly in me.polygons:
+            poly.use_smooth = True
+        me.materials.append(bpy.data.materials.get("Himation madder") or bpy.data.materials.new("Himation madder"))
+        return ob
+
+
+    # ==========================================================================
+    # render stage (runs inside the scene copy)
+    # ==========================================================================
+    MANNEQUIN_PREFIXES = ("Standing actor", "Reclining actor", "Stagehand A", "Stagehand B")
+
+    def mannequin_objects():
+        figc = bpy.data.collections.get("Figures")
+        objs = list(figc.all_objects) if figc else []
+        return [o for o in objs if o.name.startswith(MANNEQUIN_PREFIXES)]
+
+    def append_figures(path):
+        with bpy.data.libraries.load(path, link=False) as (src, dst):
+            dst.collections = [c for c in src.collections if c == "MH figures" or c.endswith("(frozen)")]
+        top = bpy.data.collections["MH figures"]
+        bpy.context.scene.collection.children.link(top)
+        # use the scene's own dye and leather materials (same colours as the mannequins wear)
+        for c in top.children:
+            for o in c.objects:
+                if o.type != "MESH":
+                    continue
+                for slot in o.material_slots:
+                    m = slot.material
+                    if m is None:
+                        continue
+                    base = m.name.split(".")[0] if m.name[-4:-3] == "." else m.name
+                    sm = bpy.data.materials.get(base)
+                    if sm is not None and sm != m and sm.users > 0 and base in (
+                            "Chiton undyed wool", "Chiton saffron", "Himation woad", "Himation madder",
+                            "Stagehand tunic (dark wool)", "Soft leather boots"):
+                        slot.material = sm
+        return top
+
+    def place_figures(top, ctrl_y):
+        ctrl = bpy.data.objects["Platform ctrl"]
+        groups = {}
+        for c in top.children:
+            name = c.name.replace("MH ", "").replace(" (frozen)", "")
+            groups[name] = list(c.objects)
+            for o in c.objects:
+                if name == "Reclining actor":
+                    mw = o.matrix_world.copy()
+                    o.parent = ctrl
+                    o.matrix_parent_inverse = Matrix.Identity(4)
+                    o.matrix_basis = mw            # platform-local = local to the platform rig
+                elif name == "Standing actor":
+                    o.matrix_world = Matrix.Translation((0, ctrl_y[SHOTS["tableau"][1]], 0)) @ o.matrix_world
+                else:
+                    o.matrix_world = Matrix.Translation((0, ctrl_y[SHOTS["cutaway"][1]], 0)) @ o.matrix_world
+        return groups
+
+    def render(opts):
+        work = os.path.abspath(opts["work"])
+        outdir = os.path.join(work, "renders")
+        os.makedirs(outdir, exist_ok=True)
+        spp = int(opts.get("samples", 64))
+        only = opts.get("only", "AB")
+        sc = bpy.context.scene
+        r = sc.render
+        r.resolution_x, r.resolution_y, r.resolution_percentage = 1280, 720, 100
+        r.use_overwrite, r.use_placeholder = True, False
+        r.image_settings.file_format = "PNG"
+        r.image_settings.color_mode = "RGB"
+        r.use_border = False
+        sc.cycles.samples = spp
+        sc.cycles.use_denoising = True
+        for m in sc.timeline_markers:
+            m.camera = None
+        ctrl = bpy.data.objects["Platform ctrl"]
+        fc = ctrl.animation_data.action.fcurves.find("location", index=1)
+        ctrl_y = {fr: fc.evaluate(fr) for _, fr in SHOTS.values()}
+        timing = []
+
+        def shot(tag, label, crop=None, scale=1):
+            cam, fr = SHOTS[tag]
+            sc.camera = bpy.data.objects[cam]
+            sc.frame_set(fr)
+            r.resolution_x, r.resolution_y = 1280 * scale, 720 * scale
+            if crop:
+                r.use_border, r.use_crop_to_border = True, True
+                r.border_min_x, r.border_max_x, r.border_min_y, r.border_max_y = crop
+            else:
+                r.use_border = False
+            path = os.path.join(outdir, "%s_%s.png" % (label, tag if not crop else tag + "_crop"))
+            r.filepath = path
+            t = time.time()
+            bpy.ops.render.render(write_still=True)
+            dt = time.time() - t
+            timing.append(dict(shot=tag, version=label, seconds=round(dt, 1), samples=sc.cycles.samples,
+                               res="%dx%d" % (r.resolution_x, r.resolution_y), crop=bool(crop)))
+            print("RENDER %s %s %.1fs" % (label, tag, dt))
+            with open(os.path.join(outdir, "timing_%s.json" % only), "w") as f:
+                json.dump(timing, f, indent=1)
+
+        # warm-up: kernels, images, BVH (not timed in the table)
+        sc.cycles.samples = 1
+        r.resolution_percentage = 10
+        sc.camera = bpy.data.objects[SHOTS["tableau"][0]]
+        sc.frame_set(SHOTS["tableau"][1])
+        r.filepath = os.path.join(outdir, "warmup.png")
+        bpy.ops.render.render(write_still=True)
+        r.resolution_percentage = 100
+        sc.cycles.samples = spp
+        crop = None
+        if "A" in only:
+            for tag in ("tableau", "cutaway"):
+                shot(tag, "A")
+        if "B" in only or "C" in only:
+            top = append_figures(os.path.join(work, "figures.blend"))
+            groups = place_figures(top, ctrl_y)
+            for o in mannequin_objects():
+                o.hide_render = True
+            bpy.context.view_layer.update()
+            # crop window round the reclining figure's mask in the tableau camera
+            from bpy_extras.object_utils import world_to_camera_view
+            sc.frame_set(SHOTS["tableau"][1])
+            cam = bpy.data.objects[SHOTS["tableau"][0]]
+            mask = next(o for o in groups["Reclining actor"] if o.name.endswith(" mask"))
+            pc = world_to_camera_view(sc, cam, mask.matrix_world @ (sum((V(b) for b in mask.bound_box), Vector()) / 8))
+            cw, ch = 0.26, 0.46
+            crop = (max(0, pc.x - cw * 0.55), min(1, pc.x + cw * 0.45), max(0, pc.y - ch * 0.62), min(1, pc.y + ch * 0.38))
+            with open(os.path.join(outdir, "crop.json"), "w") as f:
+                json.dump(crop, f)
+            for tag in ("tableau", "cutaway"):
+                for o in groups.get("Stagehand A", []) + groups.get("Stagehand B", []):
+                    # at the tableau frame the mannequin stagehands are hidden behind the facade wall
+                    o.hide_render = (tag == "tableau")
+                if "B" in only:
+                    shot(tag, "B")
+            for o in groups.get("Stagehand A", []) + groups.get("Stagehand B", []):
+                o.hide_render = True
+            if "C" in only:
+                shot("tableau", "B", crop=crop, scale=3)
+                for o in mannequin_objects():
+                    o.hide_render = False
+                for c in top.children:
+                    c.hide_render = True
+                shot("tableau", "A", crop=crop, scale=3)
+        print("RENDER STAGE DONE")
 
     POSERS = {
         "Standing actor": lambda P, rig: pose_standing(P, rig),
@@ -693,6 +1616,8 @@ if IN_BLENDER:
         work = os.path.abspath(opts["work"])
         os.makedirs(work, exist_ok=True)
         stage = opts.get("stage", "full")
+        if opts.get("resume") == "cloth":
+            return resume_from_cloth(work, t0)
         bpy.ops.wm.read_homefile(use_empty=True)
         sc = bpy.context.scene
         sc.render.fps = FPS
@@ -710,10 +1635,10 @@ if IN_BLENDER:
             for o in [rig, body] + assets:
                 link_to(o, fc)
             P = Poser(rig)
-            POSERS[name](P, rig)
+            frame = POSERS[name](P, rig)
             P.apply()
             print("POSED", name, {b: tuple(round(c, 3) for c in P.head(b)) for b in ("root", "head", "wrist.L", "wrist.R", "foot.L", "foot.R")})
-            figs[name] = dict(rig=rig, body=body, assets=assets, poser=P, final=P.snapshot())
+            figs[name] = dict(rig=rig, body=body, assets=assets, poser=P, final=P.snapshot(), frame=frame)
             print("FIGURE", name, "%.1fs" % (time.time() - t0))
         bpy.context.view_layer.update()
         if stage == "pose":
@@ -728,6 +1653,217 @@ if IN_BLENDER:
             bpy.ops.wm.save_as_mainfile(filepath=os.path.join(work, "posed.blend"))
             print("POSE PREVIEWS DONE %.1fs" % (time.time() - t0))
             return
+        # ---- cloth: chiton / tunics ------------------------------------------------
+        gp = bpy.data.meshes.new("Ground (collider)")
+        gp.from_pydata([(-8, -8, 0), (8, -8, 0), (8, 8, 0), (-8, 8, 0)], [], [(0, 1, 2, 3)])
+        ground = bpy.data.objects.new("Ground (collider)", gp)
+        get_coll("Context").objects.link(ground)
+        ground.hide_render = True
+        couch = [bpy.data.objects[n] for n in ("Mattress", "Cushion 0", "Cushion 1", "Couch (kline)")]
+        ctx_col = {"Standing actor": [ground], "Reclining actor": couch,
+                   "Stagehand A": [ground], "Stagehand B": [ground]}
+        simulate_garments(figs, ctx_col)
+        sc.frame_set(T_END)
+        for fig in figs.values():
+            freeze(fig["garment"])
+        bpy.ops.wm.save_as_mainfile(filepath=os.path.join(work, "cloth.blend"))
+        if stage == "cloth":
+            pdir = os.path.join(work, "preview")
+            os.makedirs(pdir, exist_ok=True)
+            for v, (cl, tg, lens, res) in PREVIEW_VIEWS.items():
+                if opts.get("views") and v not in opts["views"].split(","):
+                    continue
+                preview(os.path.join(pdir, "cloth_" + v + ".png"), cl, tg, lens, res, hide_ref=True)
+            print("CLOTH STAGE DONE %.1fs" % (time.time() - t0))
+            return
+        finish_build(figs, work, couch, t0)
+
+    def resume_from_cloth(work, t0):
+        """continue from DIR/cloth.blend (garments simulated and frozen, bodies still rigged)"""
+        bpy.ops.wm.open_mainfile(filepath=os.path.join(work, "cloth.blend"))
+        figs = {}
+        for name in FIGURES:
+            rig = bpy.data.objects.get(name + " rig")
+            if rig is None:
+                continue
+            gname = GARMENTS[name][0]
+            body = bpy.data.objects[name + " body"]
+            garment = bpy.data.objects[f"{name} {gname}"]
+            coll = bpy.data.collections["MH " + name]
+            assets = [o for o in coll.objects if o not in (rig, body, garment) and o.type == "MESH"]
+            P = Poser(rig)
+            frame = POSERS[name](P, rig)
+            figs[name] = dict(rig=rig, body=body, assets=assets, poser=P, final=P.snapshot(), frame=frame, garment=garment)
+        couch = [bpy.data.objects[n] for n in ("Mattress", "Cushion 0", "Cushion 1", "Couch (kline)")]
+        finish_build(figs, work, couch, t0)
+
+    MASKS = {"Standing actor": dict(paint=(0.74, 0.67, 0.55), hair=(0.035, 0.028, 0.022), beard=True),
+             "Reclining actor": dict(paint=(0.80, 0.74, 0.63), hair=(0.075, 0.048, 0.03), beard=False)}
+
+    def finish_build(figs, work, couch, t0):
+        sc = bpy.context.scene
+        sc.frame_set(T_END)
+        bpy.context.view_layer.update()
+        for name, fig in figs.items():
+            for o in [fig["body"]] + fig["assets"]:
+                freeze(o)
+        out = {n: [f["body"], f["garment"]] + f["assets"] for n, f in figs.items()}
+        # masks, wigs, beard; boots
+        for name, mp in MASKS.items():
+            if name in figs:
+                out[name] += build_mask(name, figs[name], mp["paint"], mp["hair"], beard=mp["beard"])
+        if "Standing actor" in figs:
+            out["Standing actor"].append(build_boots("Standing actor", figs["Standing actor"]["body"]))
+        print("MASKS %.1fs" % (time.time() - t0))
+        # second cloth pass: himation and blanket on the frozen figures
+        drapes = []
+        if "Standing actor" in figs:
+            f = figs["Standing actor"]
+            cols = [f["body"], f["garment"]]
+            cc = get_coll("COL2 Standing")
+            for o in cols:
+                make_collider(o, thick=0.008)
+                cc.objects.link(o)
+            him = build_himation("Standing actor", f, cols)
+            add_cloth(him, cc, 70, mass=0.35, bend=1.2, tension=15.0, quality=7, air=2.0)
+            drapes.append(("Standing actor", him))
+        if "Reclining actor" in figs:
+            f = figs["Reclining actor"]
+            cols = [f["body"], f["garment"]] + couch
+            cc = get_coll("COL2 Reclining")
+            for o in cols:
+                make_collider(o, thick=0.007)
+                if o.name not in cc.objects:
+                    cc.objects.link(o)
+            bl = build_blanket("Reclining actor", f, cols)
+            add_cloth(bl, cc, 70, pin=None, mass=0.4, bend=2.0, tension=15.0, quality=6, rest_key=None)
+            drapes.append(("Reclining actor", bl))
+        for o in bpy.data.objects:
+            if o.animation_data:
+                o.animation_data_clear()
+        sc.frame_start, sc.frame_end = 1, 70
+        t1 = time.time()
+        for fr in range(1, 71):
+            sc.frame_set(fr)
+        print("DRAPE SIM %.1fs" % (time.time() - t1))
+        for name, o in drapes:
+            freeze(o)
+            out[name].append(o)
+        # render dressing: thickness and smoothing; bodies subdivided once
+        for name, objs in out.items():
+            for o in objs:
+                for md in list(o.modifiers):
+                    if md.type == "COLLISION":
+                        o.modifiers.remove(md)
+                if o.type != "MESH":
+                    continue
+                if o == figs[name]["body"]:
+                    ss = o.modifiers.new("Subsurf", "SUBSURF")
+                    ss.levels, ss.render_levels = 1, 1
+                elif o in (figs[name]["garment"],) or o.name.endswith(("himation", "blanket")):
+                    sd = o.modifiers.new("Solidify", "SOLIDIFY")
+                    sd.thickness = 0.003
+                    sd.offset = 0.0
+                    ss = o.modifiers.new("Subsurf", "SUBSURF")
+                    ss.levels, ss.render_levels = 1, 1
+        # collect into one collection per figure, drop everything else
+        top = get_coll("MH figures")
+        keep = set()
+        for name, objs in out.items():
+            c = get_coll("MH " + name + " (frozen)", top)
+            for o in objs:
+                link_to(o, c)
+                keep.add(o.name)
+        for o in list(bpy.data.objects):
+            if o.name not in keep:
+                bpy.data.objects.remove(o)
+        for c in list(bpy.data.collections):
+            if c != top and not c.name.endswith("(frozen)"):
+                bpy.data.collections.remove(c)
+        bpy.ops.outliner.orphans_purge(do_recursive=True)
+        try:
+            bpy.ops.file.pack_all()
+        except Exception as e:
+            print("pack failed", e)
+        bpy.ops.wm.save_as_mainfile(filepath=os.path.join(work, "figures.blend"), compress=True)
+        print("FIGURES SAVED %.1fs" % (time.time() - t0))
+
+
+# =============================================================================
+# compose (plain Python 3 with Pillow): side-by-side images with labels
+# =============================================================================
+LABEL_A = "Current: mannequins"
+LABEL_B = "Option: MakeHuman + masks"
+FONT = "/usr/share/fonts/opentype/inter/Inter-SemiBold.otf"
+
+
+def _label(im, text, size=26):
+    from PIL import ImageDraw, ImageFont
+    try:
+        font = ImageFont.truetype(FONT, size)
+    except OSError:
+        font = ImageFont.load_default()
+    d = ImageDraw.Draw(im, "RGBA")
+    pad = int(size * 0.45)
+    x0, y0, x1, y1 = d.textbbox((0, 0), text, font=font)
+    w, h = x1 - x0, y1 - y0
+    d.rectangle((16, 16, 16 + w + 2 * pad, 16 + h + 2 * pad), fill=(20, 20, 20, 170))
+    d.text((16 + pad - x0, 16 + pad - y0), text, font=font, fill=(245, 242, 235, 255))
+
+
+def compose(opts):
+    from PIL import Image
+    work = os.path.abspath(opts["work"])
+    rd = os.path.join(work, "renders")
+    cd = os.path.join(work, "compare")
+    os.makedirs(cd, exist_ok=True)
+    outs = []
+    for tag in ("tableau", "cutaway", "tableau_crop"):
+        pa, pb = os.path.join(rd, "A_%s.png" % tag), os.path.join(rd, "B_%s.png" % tag)
+        if not (os.path.exists(pa) and os.path.exists(pb)):
+            continue
+        a, b = Image.open(pa).convert("RGB"), Image.open(pb).convert("RGB")
+        size = 26 if a.width <= 1400 else int(26 * a.width / 1280 * 0.75)
+        _label(a, LABEL_A, size)
+        _label(b, LABEL_B, size)
+        gap = 8
+        im = Image.new("RGB", (a.width + b.width + gap, max(a.height, b.height)), (255, 255, 255))
+        im.paste(a, (0, 0))
+        im.paste(b, (a.width + gap, 0))
+        name = "compare_%s" % tag
+        im.save(os.path.join(cd, name + ".png"))
+        outs.append((name, im))
+        if tag == "tableau_crop":
+            bb = Image.open(pb).convert("RGB")
+            _label(bb, LABEL_B + " (close crop, same camera)", size)
+            bb.save(os.path.join(cd, "B_reclining_mask_crop.png"))
+            outs.append(("B_reclining_mask_crop", bb))
+    repo = opts.get("repo-out")
+    if repo:
+        os.makedirs(repo, exist_ok=True)
+        for name, im in outs:
+            path = os.path.join(repo, name + ".jpg")
+            q = 90
+            while True:
+                im.save(path, quality=q, optimize=True, progressive=True)
+                if os.path.getsize(path) < 1.9e6 or q <= 60:
+                    break
+                q -= 5
+            print("JPG", path, "%.2f MB" % (os.path.getsize(path) / 1e6), "q", q)
+
+
+def run_all(opts):
+    blender = opts.get("blender", "/opt/blender/blender")
+    work = os.path.abspath(opts["work"])
+    scene = os.path.abspath(opts["scene"])
+    env = dict(os.environ)
+    if opts.get("mpfb-resources"):
+        env["BLENDER_USER_RESOURCES"] = os.path.abspath(opts["mpfb-resources"])
+    me = os.path.abspath(__file__)
+    subprocess.run([blender, "-b", "-P", me, "--", "build", "--scene", scene, "--work", work], env=env, check=True)
+    subprocess.run([blender, "-b", scene, "-P", me, "--", "render", "--work", work,
+                    "--samples", str(opts.get("samples", 64)), "--only", "ABC"], check=True)
+    compose(dict(work=work, **{"repo-out": opts.get("repo-out", HERE)}))
 
 
 # =============================================================================
@@ -740,3 +1876,7 @@ if __name__ == "__main__":
             build(OPTS)
         elif MODE == "render":
             render(OPTS)
+    elif MODE == "compose":
+        compose(OPTS)
+    elif MODE == "all":
+        run_all(OPTS)
