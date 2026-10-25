@@ -112,6 +112,7 @@ body{background:var(--sky);color:var(--ink);font-family:var(--font-ui);margin:0}
 .interior{fill:url(#gInterior)}
 .ifloor{fill:var(--interior-2)}
 .leaf{fill:url(#pLeaf);stroke:var(--ink);stroke-width:1.6;stroke-dasharray:7 4;stroke-linejoin:round}
+.leaf-far{fill:var(--leaf);fill-opacity:.3;stroke:var(--ink);stroke-width:1.5;stroke-dasharray:7 4;stroke-linejoin:round}
 .leafpanel{fill:none;stroke:var(--facade-line);stroke-width:1.3;opacity:.85}
 .leafshade{fill:var(--interior)}
 .ring{fill:none;stroke:var(--black);stroke-width:1.4}
@@ -335,7 +336,7 @@ const CAPS = [
     { c: 'eyebrow', p: [[66.0, 'What’s disputed']] },
     { c: 'main', v: [[66.0, 74.0, 'Rolled or revolved?'], [74.0, 78.0, 'How big?'], [78.0, 99, 'Since Aeschylus, or later?']] },
     { c: 'detail', v: [
-      [66.4, 70.0, 'A turntable in the doorway? The idea rests on the scholia’s verb _strephō_, “turn”. No ruin shows a pivot, and it is now a minority view.'],
+      [66.7, 70.0, 'A turntable in the doorway? The idea rests on the scholia’s verb _strephō_, “turn”. No ruin shows a pivot, and it is now a minority view.'],
       [70.0, 74.0, 'Or a windlass? Casanova reads the same verb as a crank-turned windlass that pulls the trolley out. Argued, but unproven.'],
       [74.0, 78.0, 'No 5th-century door survives, because the skene was wooden. Estimates run from about 2.5 × 1.3 m (Dearden) to about 3 m wide (Haigh).'],
       [78.0, 99, 'Certain by 425 BC, when *Acharnians* parodies it as familiar. For the *Oresteia* (458 BC) scholars are divided.']] } ] },
@@ -392,11 +393,11 @@ const MODES = {
 /* camera keys per panel: [time, view, opacity] */
 const CAM = {
   F: [[0, 'title'], [5.0, 'title'], [6.6, 'full'], [18.0, 'full'], [20.6, 'cut', 0], [28.3, 'split', 0], [29.7, 'split'], [46.0, 'split'], [47.4, 'full'],
-      [58.0, 'full'], [59.4, 'split'], [66.0, 'split'], [66.9, 'split', 0], [82.1, 'full', 0], [82.9, 'full'], [87.8, 'full'], [90, 'push']],
+      [58.0, 'full'], [59.4, 'split'], [66.0, 'split'], [66.8, 'split', 0], [82.3, 'full', 0], [82.95, 'full'], [87.8, 'full'], [90, 'push']],
   S: [[17.95, 'slit', 0], [18.0, 'slit'], [20.8, 'full'], [28.0, 'full'], [29.7, 'split'], [46.0, 'split'], [46.6, 'split', 0], [58.4, 'split', 0], [59.3, 'split'],
-      [66.0, 'split'], [67.4, 's7'], [82.0, 's7'], [82.7, 's7', 0]],
-  P: [[66.2, 'p7', 0], [67.4, 'p7'], [82.0, 'p7'], [82.7, 'p7', 0]],
-  T: [[78.0, 't7', 0], [78.7, 't7'], [82.0, 't7'], [82.7, 't7', 0]],
+      [65.7, 'split'], [66.7, 's7'], [82.0, 's7'], [82.4, 's7', 0]],
+  P: [[66.6, 'p7', 0], [67.4, 'p7'], [82.0, 'p7'], [82.4, 'p7', 0]],
+  T: [[78.0, 't7', 0], [78.7, 't7'], [82.0, 't7'], [82.4, 't7', 0]],
 };
 const PTITLES = {
   wide: { F: 'Front elevation · what the audience sees', S: 'Side section · cut through the central door', P: 'Plan · from above', T: 'First use' },
@@ -599,7 +600,7 @@ const STAGEHAND = id => `<g id="${id}"><path class="hand-o" id="${id}-o"/><path 
   panels.S.world.innerHTML = `
   <rect class="backstage" x="-360" y="-284" width="342" height="284" mask="url(#mFadeL)"/>
   <rect class="jamb" x="-18" y="-192" width="18" height="192"/>
-  <rect class="leaf" id="S-leaf" x="-17" y="-190" width="5" height="188" fill-opacity=".62"/>
+  <rect class="leaf-far" id="S-leaf" x="-17" y="-190" width="5" height="188"/>
   <rect class="ground" x="-360" y="0" width="900" height="46" mask="url(#mFadeL)"/>
   <line class="r3" x1="-360" y1="0" x2="540" y2="0" mask="url(#mFadeL)"/>
   <rect id="S-gplat-out" class="deck-out" x="-22" y="-18" width="96" height="9" opacity="0"/>
@@ -952,10 +953,10 @@ function renderS(t, st) {
   $('S-w2').setAttribute('transform', `translate(84,-7) rotate(${r2(rot)})`);
   const wts = { push: st.wPush, pull: st.wPull, idle: 1 - st.wPush - st.wPull };
   const C = [back, -15];
-  const gB = stagehand(C, wts, delta, [.12, .62], st.moving, [-9, -3]);
+  const gB = stagehand(C, wts, delta, [.12, .62], st.moving, [-17, -2]);
   const gA = stagehand(C, wts, delta, [0, .5], st.moving, [0, 0]);
   drawHand('hB', gB); drawHand('hA', gA);
-  $('hB').setAttribute('opacity', .78);
+  $('hB').setAttribute('opacity', .6);
   st.hAhead = gA.head;
   /* force arrows */
   const pushO = win(t, 37.3, 41.4, .3), pullO = win(t, 59.2, 62.9, .3);
