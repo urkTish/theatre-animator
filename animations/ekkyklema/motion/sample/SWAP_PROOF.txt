@@ -1,0 +1,5 @@
+Swap proof: the same 10 s rendered twice, changing only the stand-in style (clay vs vase).
+plate frames (PNG md5, 240 each): identical = True
+composite frames that differ: 240 of 240 (the characters differ, as intended)
+tracks.json md5 clay 198734ba8fcfbfb2ad6b9ec4de7952b6  vase 198734ba8fcfbfb2ad6b9ec4de7952b6  identical = True
+plate.mp4 md5 clay 241a9aba7519da089e3872b65f545de8  vase 241a9aba7519da089e3872b65f545de8
