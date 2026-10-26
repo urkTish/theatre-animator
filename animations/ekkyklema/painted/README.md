@@ -125,7 +125,9 @@ a holdout. The tracks come from the rig and the motion only, so they are identic
   anchors, scale and facing, and apply the holdouts (cut it with the cast alpha, or with your own matte for the door
   frame), then multiply by the paper grain if you want it to sit in the paint.
 - **Proof:** `sample/SWAP_PROOF.txt`. The film was rendered with look set A and with look set B: every plate frame is
-  bit-identical (pixel hashes), `tracks.json` is byte-identical, and the cast differs in every frame.
+  bit-identical (pixel hashes), `tracks.json` and `plate.mp4` are byte-identical, and the cast differs in every frame
+  with a character on screen (351 of 360; the other 9 are the opening wipe and the closed iris).
+  `sample/composite_lookB.mp4` is that look-B film.
 
 ## Render speed
 

@@ -1,0 +1,18 @@
+Swap proof: the same 15 s (360 frames, 24 fps) rendered twice, changing ONLY the looks that fill the four slots
+(render.mjs --layers --looks=A, then --looks=B; LOOK_SETS in cast/cast.js). Motion, camera and set are untouched.
+
+  slots re-cast: standing_actor dikaiopolis -> dikaiopolis_B, reclining_figure euripides -> euripides_B,
+                 stagehand_1 stagehand_a -> stagehand_a_B, stagehand_2 stagehand_b -> stagehand_b_B
+
+plate frames, pixel hash (FNV over the raw RGBA canvas): identical in 360 of 360 frames
+plate frames, JPEG file md5:                            identical in 360 of 360 frames
+tracks, per frame (camera, machinery, every slot):      identical in 360 of 360 frames
+cast frames, pixel hash:                                 different in 351 of 360 frames (the other 9 have no character on screen: the opening wipe and the closed iris)
+
+tracks.json   md5  A 171be361599b927254d39ee5712c3d91  B 171be361599b927254d39ee5712c3d91  identical = True
+plate.mp4     md5  A ac5699c164b739a5ebf7f4bce69e9b7e  B ac5699c164b739a5ebf7f4bce69e9b7e  identical = True
+composite.mp4 md5  A d4e30eff903b9b536ffcd474f6c0e398  B 202e7ba6e6d75b4048809684130b4ae6  identical = False (the characters differ, as intended)
+
+Every frame is also deterministic on its own: the same frame rendered by different workers, in any order, gives the
+same hashes (frame_hashes.json). The hashes above refer to the full-quality scratch renders; the MP4s in sample/
+are re-encodes of them.
