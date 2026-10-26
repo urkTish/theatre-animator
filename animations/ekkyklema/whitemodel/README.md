@@ -69,7 +69,21 @@ node render.mjs --style vase --stills 12 --out /tmp/vase                        
 
 ## Render speed
 
-RENDER_SPEED_PLACEHOLDER
+This machine: 4 CPU cores, no GPU, so Chromium runs WebGL in software (SwiftShader). Measured on the full 1920×1080 render (`out/white/render_stats.json`), three workers in parallel (two or three workers beat one by about 1.5×; four did not help):
+
+| Layer | s/frame per worker (3 sharing the machine) |
+|---|---|
+| `all` (composite, with the 2D overlay) | 11.2 |
+| `plate` | 8.8 |
+| `cast` (RGBA) | 5.7 |
+| `matte` | free (taken from the cast alpha) |
+
+- Look A, all three layers, 360 frames: **56 min wall clock** (≈ 9.3 s per frame for all layers together).
+- Look B plate only (for the swap proof), 360 frames: about 25 min.
+- Encoding (H.264 ×3, ProRes 4444 cast) ≈ 4 min; the sound mix 5 s; mux with two-pass loudnorm ≈ 1 min.
+- Review stills at 960×540: ≈ 3.6 s each, which is what the four look rounds used (`--stills ... --w 960 --h 540`).
+
+What costs the time: the scene pass with 4× MSAA and shadows, depth of field on the close shots, and re-meshing the four signed-distance stand-ins (≈ 1.5 s per frame; a glTF or sprite cast skips it). On a machine with a GPU the page renders in real time (`--serve`).
 
 ## What was taken from lemo-opuscar (with credit)
 

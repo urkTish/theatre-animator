@@ -10,15 +10,15 @@
     let [x, , z] = ev.root, y = 0;
     if (S.body.body === 'recliner') y = GEO.deckY + GEO.couchH;
     const [sx, sy, k] = proj(x, y, z);
-    return { name, S, R, x, y, z, sx, sy, k, env: { shade: shadeAt(z), key: name } };
+    return { name, S, R, x, y, z, sx, sy, k, env: { shade: shadeFig(z), key: name } };
   }
   const NAMES = ['standing_actor', 'reclining_figure', 'stagehand_1', 'stagehand_2'];
   // ---------------------------------------------------------------- plate: the set, in depth order
   function paintPlate(t) {
     const X = window.EXP || {};
-    if (!X.noBg) paintBatch(backdropShapes(t));
+    if (!X.noBg) paintShapes(backdropShapes(t));
     if (!X.noGlow) { boilSeed('sun'); const sp = proj(30, 6, -60); glow(sp[0], sp[1], 520, '#FFC77A', .55); }
-    if (!X.noGround) paintBatch(groundShapes(t));
+    if (!X.noGround) paintShapes(groundShapes(t));
     const F = facadeShapes(t), P = platformShapes(t);
     if (!X.noInt) paintShapes(interiorShapes(t, F.OP));
     if (!X.noPlat) { if (t < DOORS_OPEN) { paintW(P.L); paintShapes(leafShapes(t)); } else { paintShapes(leafShapes(t)); paintW(P.L); } }
@@ -55,8 +55,10 @@
   }
   // the door-shaped iris that closes over the tableau (the ending rhymes with the shut door of the opening)
   const IRIS = { t0: 13.95, hold: 14.45, t1: 14.96 };
+  function headOn(name, t) { const s = slotAt(name, t), h = s.R.anchors.head; return [s.sx + (s.R.flip ? -1 : 1) * h[0] * s.k, s.sy - h[1] * s.k]; }
   function irisPts(t) {
-    const c = [1010, 650], hh = t < IRIS.hold ? lerp(1500, 430, easeOut(seg(t, IRIS.t0, IRIS.hold))) : lerp(430, 0, easeIn(seg(t, IRIS.hold + .05, IRIS.t1))), hw = hh * GEO.doorW / GEO.doorH;
+    const he = headOn('reclining_figure', t), ha = headOn('standing_actor', t), u = ease(seg(t, IRIS.t0, IRIS.t1));
+    const c = [lerp((he[0] + ha[0]) / 2, he[0], u), lerp((he[1] + ha[1]) / 2 + 120, he[1] + 40, u)], hh = t < IRIS.hold ? lerp(1500, 430, easeOut(seg(t, IRIS.t0, IRIS.hold))) : lerp(430, 0, easeIn(seg(t, IRIS.hold + .05, IRIS.t1))), hw = hh * GEO.doorW / GEO.doorH;
     boilSeed('iris');
     return [[c[0] - hw, c[1] + hh], [c[0] - hw, c[1] - hh], [c[0] + hw, c[1] - hh], [c[0] + hw, c[1] + hh]].map(([x, y]) => [x + jit(2), y + jit(2)]);
   }

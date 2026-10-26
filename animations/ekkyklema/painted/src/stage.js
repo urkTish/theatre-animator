@@ -36,9 +36,9 @@ const wheelAngle = t => rollDist(t) / GEO.wheelR;
 // (Xp, Yh) = where the eye's axis lands on screen (a lens shift, so verticals stay vertical).
 function camAt(t) {
   const e = ease;
-  const cz = kf(t, [[0, 14.2], [2.6, 13.8], [5.3, 13.1], [9.9, 8.95], [15, 8.55]], e);
-  const Xp = kf(t, [[0, 120], [2.6, 100], [5.3, 30], [9.9, -620], [15, -655]], e) + 6 * Math.sin(t * .4);
-  const Yh = kf(t, [[0, 505], [2.6, 495], [5.3, 470], [9.9, 222], [15, 205]], e) + 3 * Math.sin(t * .31 + 1);
+  const cz = kf(t, [[0, 12.6], [1.0, 12.5], [2.4, 11.7], [5.3, 11.2], [9.9, 8.0], [15, 7.75]], e);
+  const Xp = kf(t, [[0, -30], [1.0, -30], [2.4, -60], [5.3, -110], [9.9, -840], [15, -880]], e) + 6 * Math.sin(t * .4);
+  const Yh = kf(t, [[0, 525], [1.0, 525], [2.4, 505], [5.3, 470], [9.9, 168], [15, 152]], e) + 3 * Math.sin(t * .31 + 1);
   return { cx: -5, cy: 2.8, cz, F: 2100, Xp, Yh };
 }
 let CAMS = camAt(0);
@@ -57,7 +57,10 @@ const SET = {
   couch: '#7A4B2C', couchDk: '#5A3620', linen: '#E9DCBB', stripe: '#A9432F', stripe2: '#3F5F8C', pillow: '#A9432F', stool: '#8A5A34', cup: '#201A1C',
 };
 // the dark of the skene's interior, by depth: 0 outside in the light, about 0.88 deep inside
-const shadeAt = z => .97 * smoother(seg(z, .2, -1.5));
+const shadeAt = z => .9 * smoother(seg(z, .2, -1.4)) + .075 * smoother(seg(z, -2.0, -3.3));
+// figures sink a little deeper into the dark than the set (cloth and skin catch less of the spill than linen and wood),
+// so the couch hints at the tableau while the stagehands behind it stay unseen
+const shadeFig = z => .965 * smoother(seg(z, .2, -1.3)) + .025 * smoother(seg(z, -2.0, -3.3));
 
 // ---------------------------------------------------------------- shapes
 // A shape is { pts (screen), o (paint options) }. mk(key, ...) seeds it, so its jitter depends on the key and the boil
@@ -119,26 +122,35 @@ const swAt = (z, base = 1) => base * clamp(scaleAt(z) / 260, .35, 1.25);
 
 // ---------------------------------------------------------------- the backdrop: sky, distant hills, trees
 function backdropShapes(t) {
-  const c = CAMS, L = [], far = (x, y) => [c.Xp + (x - c.cx) * c.F / 900 + 0, c.Yh - (y - c.cy) * c.F / 900];   // very far things barely move
-  L.push(mkS('sky', rectPts(-80, -80, W + 160, H + 160), { wash: SET.skyTop, ink: null }));
-  L.push(mkS('skyMid', [[-80, c.Yh - 520], [W + 80, c.Yh - 560], [W + 80, c.Yh + 200], [-80, c.Yh + 200]], { wash: over(SET.skyTop, SET.skyMid, .8), ink: null }));
-  L.push(mkS('skyLow', [[-80, c.Yh - 300], [W + 80, c.Yh - 340], [W + 80, c.Yh + 300], [-80, c.Yh + 300]], { wash: over(SET.skyMid, SET.skyLow, .8), ink: null }));
-  // hills to the right of the skene (Hymettos in the haze) and a low ridge
-  const hz = c.Yh - 40;
+  const c = CAMS, L = [], hz = c.Yh - 40;
+  // the sky: lilac-blue above, warming to gold at the horizon (opaque bands with soft, wavering edges)
+  const SKY = ['#A9B6CC', '#C4BDC6', '#DDC6B4', '#EDCFA6', '#F4D79E'];
+  L.push(mkS('sky', rectPts(-80, -80, W + 160, H + 160), { wash: SKY[0], ink: null }));
+  for (let i = 1; i < SKY.length; i++) {
+    const y = hz - 620 + i * 125, P = [];
+    for (let k = 0; k <= 12; k++) P.push([-80 + k * (W + 160) / 12, y + 14 * Math.sin(k * 1.3 + i * 2) + jitAt('sky' + i, k, 4)]);
+    L.push(mkS('sky' + i, [...P, [W + 80, H + 80], [-80, H + 80]], { wash: SKY[i], ink: null }));
+  }
+  // hills to the right of the skene (Hymettos in the haze) and a nearer ridge
   L.push(mkS('hillFar', [[600, hz + 60], [1100, hz - 60], [1500, hz - 130], [1800, hz - 90], [2100, hz - 30], [2100, hz + 300], [600, hz + 300]].map(([x, y]) => [x + (c.Xp - 120) * .15, y]), { wash: SET.hillFar, ink: null }));
   const hn = [[900, hz + 70], [1300, hz + 10], [1650, hz - 30], [2000, hz + 20], [2100, hz + 60]].map(([x, y]) => [x + (c.Xp - 120) * .3, y]);
   L.push(mkS('hillNear', [...hn, [hn[4][0], hz + 400], [hn[0][0], hz + 400]], { wash: SET.hillNear, ink: null }));
   { const e = mkS('hillRidge', through(hn, 6), { hair: 2.2, col: mixCol(SET.hillNear, PAL.ink, .5) }); e.line = true; L.push(e); }
-  // a few cypresses and olives on the slope to the right
+  // cypresses (tall flames) and olives (grey-green clumps on a short trunk) on the slope beyond the skene
   for (let i = 0; i < 5; i++) {
-    const x = 6.9 + i * 1.15 + hash(i) * .4, z = -2.5 - hash(i + 9) * 3, h = i % 2 ? 4.5 + hash(i) : 2.4 + hash(i + 3);
-    const [bx, by] = proj(x, 0, z), s = scaleAt(z), wd = (i % 2 ? .55 : 1.4) * s;
-    const pts = i % 2 ? [[bx - wd * .5, by], [bx - wd * .55, by - h * s * .5], [bx, by - h * s], [bx + wd * .55, by - h * s * .5], [bx + wd * .5, by]]
-                      : ellPts(bx, by - h * s * .55, wd, h * s * .45, 16);
-    L.push(mkS('tree' + i, pts, { wash: i % 2 ? SET.treeDk : SET.tree, ink: PAL.ink, sw: .5, curv: .4 }));
+    const x = 6.7 + i * 1.25 + hash(i) * .4, z = -2.5 - hash(i + 9) * 3, cyp = i % 2 === 1;
+    const [bx, by] = proj(x, 0, z), s = scaleAt(z), h = (cyp ? 5.2 + hash(i) : 3.2 + hash(i + 3)) * s, w = (cyp ? .62 : 2.0) * s;
+    if (bx - w > W + 40) continue;
+    if (cyp) L.push(mkS('tree' + i, through([[bx - w * .5, by], [bx - w * .52, by - h * .45], [bx - w * .18, by - h * .85], [bx, by - h], [bx + w * .2, by - h * .82], [bx + w * .52, by - h * .4], [bx + w * .5, by]], 4).map(([u, v]) => [u + jitAt('tree' + i, u, 1.5), v]), { wash: SET.treeDk, ink: PAL.ink, sw: .45 }));
+    else {
+      L.push(mkS('trunk' + i, [[bx - w * .05, by], [bx + w * .06, by], [bx + w * .03, by - h * .5], [bx - w * .03, by - h * .5]], { wash: '#6E5A48', ink: null }));
+      for (const [k, dx, dy, r] of [[0, -.22, .62, .3], [1, .2, .66, .32], [2, 0, .82, .3]]) L.push(mkS('olive' + i + k, ellPts(bx + dx * w, by - dy * h, r * w, r * h * .55, 16).map(([u, v], j) => [u + jitAt('ol' + i + k, j, 2), v]), { wash: k === 2 ? '#8E9670' : SET.tree, ink: PAL.ink, sw: .4, curv: .4 }));
+    }
   }
   return L;
 }
+// deterministic per-(key, index, boil frame) jitter, for shapes built in screen space
+const jitAt = (key, i, a) => (hash(keyHash(key) + i * 7.31 + BOILN * 53.7) - .5) * 2 * a;
 
 // ---------------------------------------------------------------- the ground: beaten earth
 function groundShapes(t) {
@@ -321,7 +333,7 @@ function platformShapes(t) {
   P('deckFront', [[-hw, y0, zf], [hw, y0, zf], [hw, y1, zf], [-hw, y1, zf]], { wash: zs(zf, SET.deckDk), ink: zs(zf, PAL.ink), sw }, .8);
   // the couch (kline): back legs, the raised head end, frame, mattress with a striped cover, a pillow, front legs
   const cz = zf + GEO.couchZ, cd = GEO.couchD / 2, cl = GEO.couchL / 2, cy0 = y1 + .32, cy1 = y1 + GEO.couchH, zc = cz;
-  const leg = (key, x, z) => P(key, [[x - .05, y1, z], [x + .05, y1, z], [x + .06, cy0 - .02, z], [x + .03, cy0 - .12, z], [x + .06, cy0 - .2, z], [x - .06, cy0 - .2, z], [x - .03, cy0 - .12, z], [x - .06, cy0 - .02, z]], { wash: zs(z, SET.couchDk), ink: zs(z, PAL.ink), sw: sw * .7 }, .5);
+  const leg = (key, x, z) => P(key, [[x - .03, y1, z], [x + .03, y1, z], [x + .045, cy0 - .16, z], [x + .055, cy0 - .08, z], [x + .045, cy0, z], [x - .045, cy0, z], [x - .055, cy0 - .08, z], [x - .045, cy0 - .16, z]], { wash: zs(z, SET.couchDk), ink: zs(z, PAL.ink), sw: sw * .7 }, .4);
   leg('legRB', cl - .1, cz - cd + .06); leg('legLB', -cl + .1, cz - cd + .06);
   P('headEnd', [[cl - .12, cy0, cz - cd], [cl + .02, cy0, cz - cd], [cl + .1, cy1 + .32, cz], [cl - .02, cy1 + .26, cz], [cl - .12, cy1, cz]], { wash: zs(zc, SET.couch), ink: zs(zc, PAL.ink), sw: sw * .8, curv: .5 }, .5);
   P('mattTop', [[-cl + .03, cy1, cz - cd + .05], [cl - .08, cy1, cz - cd + .05], [cl - .08, cy1, cz + cd - .02], [-cl + .03, cy1, cz + cd - .02]], { wash: zs(zc, SET.linen), ink: null }, .5);

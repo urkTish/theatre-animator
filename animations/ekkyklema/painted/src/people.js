@@ -59,9 +59,9 @@ function limbL(P, w0, w1 = w0, n = 5) {
 
 // ---------------------------------------------------------------- colour under the scene light
 // env.shade 0..1 sinks every colour toward the dark of the skene's interior; env.warm 0..1 adds the low sun.
-const DARK = '#18121a', SUNC = '#FFD9A0';
+const DARK = '#1D1416', SUNC = '#FFD9A0';   // DARK = the skene's interior (SET.dark)
 let ENV = { shade: 0, warm: 0 };
-const C = c => { let o = c; if (ENV.warm > 0) o = mixCol(o, SUNC, .12 * ENV.warm); if (ENV.shade > 0) o = mixCol(o, DARK, .9 * ENV.shade); return o; };
+const C = c => { let o = c; if (ENV.warm > 0) o = mixCol(o, SUNC, .12 * ENV.warm); if (ENV.shade > 0) o = mixCol(o, DARK, ENV.shade); return o; };
 const INK = () => C(PAL.ink);
 // painting shortcuts (local points)
 const SWB = () => clamp(XF.k / 520, .22, 1.1);                         // base outline weight for this size

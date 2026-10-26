@@ -1,0 +1,23 @@
+SWAP PROOF: changing the characters' look changes neither the plate nor the tracks
+
+look A: cast.json                 (representation: {"type":"standin","style":"white","costume":"actor"} in every slot)
+look B: examples/cast.clay.json   (representation: {"type":"standin","style":"clay","costume":"actor"} in every slot)
+motion blocks in the two cast files identical: true
+
+plate frames rendered: A 360, B 360 (1920x1080, 24 fps, 0-15.00 s)
+plate frames with identical MD5 (lossless PNG captures): 360 / 360
+tracks.json sha256  A fecf0bbb87e711453aeabaca5258514329e4bdfe5e3c3bf44a8c34a6b5533787
+tracks.json sha256  B fecf0bbb87e711453aeabaca5258514329e4bdfe5e3c3bf44a8c34a6b5533787
+tracks.json byte-identical: true
+
+first / middle / last plate hashes (A = B):
+  frame   0  ad2a158a6264f2aaebeb8a6053d2adcc  ad2a158a6264f2aaebeb8a6053d2adcc
+  frame 180  96dcb10c6dd81c9920ae87b825684242  96dcb10c6dd81c9920ae87b825684242
+  frame 359  139aa4a7f36955aea03c81bb46ff6e88  139aa4a7f36955aea03c81bb46ff6e88
+
+Why it holds: the plate layer hides every character slot and their shadows (contactShadows off), the projector
+puts data colours only on the model (figures get the neutral black level only), and tracks.json is computed from
+the canonical skeleton and simple set occluders, never from the mesh that fills a slot.
+The hashes refer to the full-quality PNG renders (outside the repo); plate.mp4 is an H.264 encode of look A's plate.
+
+RESULT: PASS

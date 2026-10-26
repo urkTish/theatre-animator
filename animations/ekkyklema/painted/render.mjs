@@ -13,11 +13,16 @@
 //     node render.mjs --encode --out=out/video.mp4                                           out/frames → MP4
 //   Standalone loops (LOOPS in the page): add --loop=<name> to any of the above (times are then loop times), or
 //     node render.mjs --loop=emotions --png --out=out/loop_emotions                          one cycle as PNGs (for GIFs)
+//   Layers (the ekkyklema sample's green-screen outputs, see README.md):
+//     node render.mjs --soft-gl --layers --out=OUT [--range=0:15] [--workers=3] [--looks=A|B] [--no-cast]
+//         OUT/composite/*.jpg, OUT/plate/*.jpg, OUT/cast/*.png (RGBA), OUT/meta/*.json (hashes, track, timings); resumable
+//     node render.mjs --encode-layers --out=OUT [--crf=20] [--prores]
+//         -> composite.mp4, plate.mp4, matte.mp4 (+ cast_prores4444.mov), tracks.json, frame_hashes.json, render_stats.json
 //   Music: --audio=assets/song.mp3 (or PROJECT.audio) is muxed into --clip and --encode. Other flags: --fps=24,
 //   --chrome=<path to Chrome/Chromium>.
 import puppeteer from 'puppeteer-core';
 import { spawn } from 'node:child_process';
-import { mkdirSync, writeFileSync, existsSync, statSync, renameSync, readdirSync } from 'node:fs';
+import { mkdirSync, writeFileSync, existsSync, statSync, renameSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { homedir } from 'node:os';
@@ -49,6 +54,25 @@ if (args.encode) {
     ...(audio ? ['-i', audio, '-map', '0:v', '-map', '1:a', '-c:a', 'aac', '-b:a', '192k', '-shortest'] : []),
     '-c:v', 'libx264', '-preset', 'slow', '-crf', '17', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', out]);
   console.log('wrote ' + out);
+  process.exit(0);
+}
+
+if (args['encode-layers']) {
+  const D = args.out, crf = String(args.crf || 20), metas = readdirSync(`${D}/meta`).filter(f => f.endsWith('.json')).sort();
+  const M = metas.map(f => JSON.parse(readFileSync(`${D}/meta/${f}`, 'utf8')));
+  writeFileSync(`${D}/tracks.json`, JSON.stringify({ fps, frames: M.length, note: 'per frame: camera, machinery (props) and, per slot, world root, screen root, scale (px per metre), facing, light, and screen anchors (head, pelvis, hands, feet) with an occluded flag. From the rig only: identical for every look.', frames_data: M.map(m => m.track) }));
+  writeFileSync(`${D}/frame_hashes.json`, JSON.stringify(M.map(m => ({ frame: m.frame, plate: m.plateHash, cast: m.castHash })), null, 0));
+  const avg = k => M.reduce((a, m) => a + (m.ms[k] || 0), 0) / M.length;
+  writeFileSync(`${D}/render_stats.json`, JSON.stringify({ frames: M.length, ms_per_frame: { plate: Math.round(avg('plate')), cast: Math.round(avg('cast')), encode_and_readback: Math.round(avg('encode')), wall_per_frame_per_worker: Math.round(avg('wall')) }, workers: M[0].workers }, null, 1));
+  const enc = (inp, out, extra) => run('ffmpeg', ['-y', '-loglevel', 'error', '-framerate', String(fps), '-i', inp, ...extra, out]);
+  const h264 = ['-c:v', 'libx264', '-preset', 'slow', '-crf', crf, '-pix_fmt', 'yuv420p', '-movflags', '+faststart'];
+  await enc(`${D}/composite/f%05d.jpg`, `${D}/composite.mp4`, h264);
+  await enc(`${D}/plate/f%05d.jpg`, `${D}/plate.mp4`, h264);
+  if (existsSync(`${D}/cast`)) {
+    await enc(`${D}/cast/f%05d.png`, `${D}/matte.mp4`, ['-vf', 'alphaextract,format=yuv420p', '-c:v', 'libx264', '-preset', 'slow', '-crf', crf, '-movflags', '+faststart']);
+    if (args.prores) await enc(`${D}/cast/f%05d.png`, `${D}/cast_prores4444.mov`, ['-c:v', 'prores_ks', '-profile:v', '4444', '-pix_fmt', 'yuva444p10le', '-vendor', 'apl0']);
+  }
+  console.log('wrote', D, 'tracks.json frame_hashes.json render_stats.json composite.mp4 plate.mp4', existsSync(`${D}/cast`) ? 'matte.mp4' + (args.prores ? ' cast_prores4444.mov' : '') : '');
   process.exit(0);
 }
 
@@ -96,6 +120,26 @@ if (args.sheet || args.strip) {
   const { url, ms } = await page.evaluate((ts, c, w, crop, at) => window.renderSheet(ts, c, w, crop, at), ts, +(args.cols || (args.strip ? 6 : 3)), +(args.w || (args.strip ? 320 : 640)), crop, at);
   writeFileSync(out, Buffer.from(url.slice(url.indexOf(',') + 1), 'base64'));
   console.log(`${out}  (${ts.length} frames)  ms/frame: ${ms.join(' ')}`);
+} else if (args.layers) {
+  // Parallel and resumable: each worker takes the next frame whose meta file is missing.
+  const D = args.out || 'out/layers', probe = await openPage(), len = await lengthOf(probe); await probe.close();
+  const [a, b] = args.range ? span(args.range) : [0, len], workers = +(args.workers || 3), noCast = !!args['no-cast'];
+  for (const sub of ['composite', 'plate', 'cast', 'meta']) mkdirSync(`${D}/${sub}`, { recursive: true });
+  const first = Math.round(a * fps), last = Math.min(Math.ceil(len * fps) - 1, Math.round(b * fps) - 1);
+  const todo = []; for (let i = first; i <= last; i++) if (!existsSync(`${D}/meta/f${String(i).padStart(5, '0')}.json`)) todo.push(i);
+  console.log(`${todo.length} frames to render (${last - first + 1 - todo.length} done), ${workers} workers, looks=${args.looks || 'A'}`);
+  let next = 0, done = 0; const start = Date.now();
+  const save = (f, url) => { const tmp = f + '.tmp'; writeFileSync(tmp, Buffer.from(url.slice(url.indexOf(',') + 1), 'base64')); renameSync(tmp, f); };
+  await Promise.all(Array.from({ length: workers }, async (_, w) => {
+    const page = await openPage('#' + w);
+    while (next < todo.length) {
+      const i = todo[next++], n = String(i).padStart(5, '0'), t0 = Date.now();
+      const R = await page.evaluate(t => renderLayers(t, { images: true, hash: true, tracks: true }), i / fps);
+      save(`${D}/composite/f${n}.jpg`, R.composite); save(`${D}/plate/f${n}.jpg`, R.plate); if (!noCast) save(`${D}/cast/f${n}.png`, R.cast);
+      writeFileSync(`${D}/meta/f${n}.json`, JSON.stringify({ frame: i, t: R.t, plateHash: R.plateHash, castHash: R.castHash, ms: { ...R.ms, wall: Date.now() - t0 }, workers, track: R.track }));
+      if (++done % 12 === 0 || done === todo.length) { const el = (Date.now() - start) / 1000; console.log(`frame ${done}/${todo.length}  ${(el / done).toFixed(1)} s/frame effective  eta ${((todo.length - done) * el / done / 60).toFixed(1)} min`); }
+    }
+  }));
 } else if (args.stills) {
   const page = await openPage(), out = args.out || 'out/stills'; mkdirSync(out, { recursive: true });
   console.log('GPU:', await page.evaluate(() => window.gpuInfo()));

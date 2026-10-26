@@ -75,35 +75,37 @@ const CAST = {
     },
     // ---------------------------------------------------------------- the stagehands: push from behind, unseen
     stagehand_1: {
-      label: 'Stagehand (audience-left): pushes from behind, lets go at 8.1 s while the platform coasts its last 0.7 m, backs off into the dark and slips behind the facade wall; never seen by the audience',
+      label: 'Stagehand (audience-left): pushes from behind, lets go at 8.1 s while the platform coasts its last 0.7 m, and slips sideways behind the left jamb and wall; never seen by the audience',
       body: { body: 'stagehand', height: 1.72 },
       look: 'stagehand_a',
       motion: {
         space: 'platform', steps: true, idle: { breath: 1.2, sway: .5, seed: 2.1 },
-        root: [[0, -.55, -1.98, .6, 'platform'], [8.1, -.55, -1.42, .55], [8.8, -.62, -1.95, .8], [9.75, -2.7, -2.0, 1.3]],
+        root: [[0, -.55, -1.98, .6, 'platform'], [8.1, -.55, -1.42, .5], [8.5, -1.8, -1.5, .85], [9.6, -2.9, -1.6, 1.2]],
         keys: [
           [0, { heading: 0, headHeading: 0, crouch: .32, lean: 0, headDy: 0, headDown: false, r: { a: .5, e: .6, w: 0, h: 'relax' }, l: { a: .4, e: .8, w: 0, h: 'relax' } }],
           [5.1, { crouch: .46, headDy: -.07, headDown: true, r: { a: .35, e: -.9, h: 'flat' }, l: { a: .35, e: -.9, h: 'flat' } }, .35],   // braces, pushes
-          [8.1, { crouch: .12, headDy: 0, headDown: false, r: { a: .2, e: .2, h: 'relax' }, l: { a: .15, e: .2, h: 'relax' } }, .4],   // lets go
-          [9.6, { heading: -.25, headHeading: -.25, crouch: .05, lean: .06 }, .2],   // turns, slips away left
+          [8.1, { crouch: .3, headDy: -.03, headDown: false, r: { a: .3, e: .4, h: 'relax' }, l: { a: .25, e: .5, h: 'relax' } }, .3],   // lets go, stays low
+          [8.42, { heading: -.25, headHeading: -.25, crouch: .3, lean: .2 }, .15],   // turns, sneaks behind the left jamb
+          [9.7, { crouch: .05, lean: .06 }, .5],
         ],
-        add: [[5.5, 8.1, 'bob', .012, 1.6], [9.8, 11.0, 'r.a', .35, 1.6], [9.8, 11.0, 'l.a', .35, 1.6, Math.PI]],
+        add: [[5.5, 8.1, 'bob', .012, 1.6], [8.5, 10.8, 'r.a', .35, 1.6], [8.5, 10.8, 'l.a', .35, 1.6, Math.PI]],
       },
     },
     stagehand_2: {
-      label: 'Stagehand (audience-right): pushes from behind, lets go at 8.18 s, backs off into the dark and slips behind the facade wall; never seen by the audience',
+      label: 'Stagehand (audience-right): pushes from behind, lets go at 8.18 s, backs past the open leaf\'s end and slips behind it and the wall; never seen by the audience',
       body: { body: 'stagehand', height: 1.75 },
       look: 'stagehand_b',
       motion: {
         space: 'platform', steps: true, idle: { breath: 1.1, sway: .6, seed: 3.4 },
-        root: [[0, .6, -1.98, .6, 'platform'], [8.18, .6, -1.38, .55], [8.9, .66, -1.95, .8], [9.85, 3.75, -2.0, 1.5]],
+        root: [[0, .6, -1.98, .6, 'platform'], [8.18, .6, -1.38, .5], [8.6, .7, -1.72, .5], [9.12, 3.1, -1.78, 1.25], [10.4, 3.9, -1.85, .8]],
         keys: [
           [0, { heading: 0, headHeading: 0, crouch: .3, lean: 0, headDy: 0, headDown: false, r: { a: .45, e: .7, w: 0, h: 'relax' }, l: { a: .5, e: .6, w: 0, h: 'relax' } }],
           [5.2, { crouch: .44, headDy: -.07, headDown: true, r: { a: .33, e: -.85, h: 'flat' }, l: { a: .37, e: -.9, h: 'flat' } }, .3],
-          [8.18, { crouch: .1, headDy: 0, headDown: false, r: { a: .2, e: .25, h: 'relax' }, l: { a: .2, e: .2, h: 'relax' } }, .4],
-          [9.7, { heading: .25, headHeading: .25, crouch: .04, lean: .06 }, .2],
+          [8.18, { crouch: .3, headDy: -.03, headDown: false, r: { a: .3, e: .45, h: 'relax' }, l: { a: .3, e: .4, h: 'relax' } }, .3],
+          [8.98, { heading: .25, headHeading: .25, crouch: .3, lean: .2 }, .15],   // backs past the leaf's end, sneaks away right
+          [10.2, { crouch: .04, lean: .06 }, .5],
         ],
-        add: [[5.5, 8.18, 'bob', .012, 1.7, 1], [9.9, 11.3, 'r.a', .35, 1.6], [9.9, 11.3, 'l.a', .35, 1.6, Math.PI]],
+        add: [[5.5, 8.18, 'bob', .012, 1.7, 1], [9.1, 11.2, 'r.a', .35, 1.6], [9.1, 11.2, 'l.a', .35, 1.6, Math.PI]],
       },
     },
   },
