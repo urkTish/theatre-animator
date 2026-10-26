@@ -129,7 +129,21 @@ a holdout. The tracks come from the rig and the motion only, so they are identic
 
 ## Render speed
 
-RENDER_SPEED_PLACEHOLDER
+Measured on this machine: 4 CPU cores, no GPU, Chromium with SwiftShader (`--soft-gl`), 1920×1080.
+
+| what | time |
+|---|---|
+| one layered frame, one worker (plate + cast + composite + PNG/JPEG encode) | **about 5 s** (3.5–7 s; render_stats.json: 5.7 s per frame per worker with 2 workers running) |
+| of which: the plate | about 3 s (the set, the platform and its tableau painted twice where they cross the facade) |
+| of which: the cast | about 1.5–2 s (the four characters, all p5.brush, plus their holdouts) |
+| the whole film, 360 frames, `--workers=2` | **2.9 s per frame effective, about 17.5 min**; more workers barely help, SwiftShader already uses every core |
+| encoding (`--encode-layers`, with ProRes) | about 3 min |
+| a model sheet (8 figures) | 0.5–1.7 s |
+| the first frame of a page | +3–50 s (shader compilation) |
+
+Before the speed work the same frame took 70–90 s here (the kit's own demo: about 40 s a frame), almost all of it in
+p5.brush's compositing pass: in software GL every colour change runs a spectral-mixing shader over the mark's bounding
+box. What changed is listed below. On a machine with a GPU the same page should render in well under a second a frame.
 
 ## How the kit was used, and where this departs from it
 

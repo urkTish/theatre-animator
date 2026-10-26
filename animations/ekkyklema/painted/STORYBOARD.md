@@ -10,7 +10,7 @@
 **Facts kept exact** (from `../STORYBOARD.md`, `../3d/SHOTLIST.md`, `../motion/README.md`):
 - Central double door 2.8 m wide × 3.2 m high; the leaves are hinged at the inner face and swing **inward** (R6).
 - Platform 2.4 m wide × 1.6 m deep, deck top 0.30 m, **4 wheels** (r = 0.12 m). It waits with its front edge 1.68 m behind the façade (clear of the leaves' swing), rolls **2.93 m in 4.0 s** (slow in, slow out, no overshoot), and stops with its front edge 1.25 m beyond the façade and its back edge just inside the doorway. The wheels turn by distance ÷ radius.
-- Two stagehands push from behind, unseen: the door frame and the dark interior hide them. When the platform stops they step sideways behind the façade wall.
+- Two stagehands push from behind, unseen: the door frame and the dark interior hide them. They let go at 8.1 s, while the platform coasts its last 0.7 m, and slip sideways behind the jambs and the open leaf (from the audience's left, the doorway shows deep into the right side of the skene, so they have to go further than the jambs to be out of sight).
 - On the platform: a couch with a reclining masked figure (an older man with grizzled hair and a full grey beard: Euripides, *Ach.* 399–409, *Thesm.* 190) and a small stool with a black-glaze cup. He stays on the couch.
 - Masks: whole-head, naturalistic, calm, painted eyes with a small dark pupil opening, small parted lips, attached hair and beard (Pronomos Vase, c. 400 BC; no Hellenistic gape). Male masks in a tanned ochre. Actors: long-sleeved, ankle-length robes in horizontal pattern bands, belted, a mantle over the left shoulder, soft low-soled boots. Stagehands: plain short belted tunics, barefoot.
 - Small additions, for clarity [R]: the actor knocks before the doors open (Dikaiopolis knocks at Euripides' door, *Ach.* 395); Euripides holds a wax tablet and stylus ("writing a tragedy with his feet up", *Ach.* 398–399).
@@ -34,16 +34,16 @@ A  0.0–15.0  [transition in: brush wipe drags off, in the façade's ochre and 
                      figure, a glint of the cup. A beat to peer in (5.0–5.5).
            5.5–9.5   the platform rolls out: 2.93 m in 4.0 s, slow to start and slow to stop, wheels turning.
                      The tableau slides from the dark into the warm light. The actor watches it come, head
-                     following, half a step back. The stagehands are hidden by the frame and the dark.
+                     following, half a step back. The stagehands are hidden by the frame and the dark;
+                     they let go at 8.1 s (it coasts the last 0.7 m) and sneak off sideways.
                      Camera dollies in with it.
            9.5–10.3  it settles; the actor turns square to the figure (the platform is "parked": hold).
-                     The stagehands step sideways behind the wall, unseen.
            10.3–11.6 the actor beckons: arm out, palm up, two beckons, then points at the ground
                      ("come down"). Euripides keeps writing until the second beckon.
            11.6–13.1 Euripides looks up, turns his head to him, raises a palm ("no"), waggles it, then flicks
                      his hand back at his tablet and settles back to writing. He never gets off the couch.
            13.1–13.9 the actor throws up both hands, exasperated, and lets them drop.
-           13.9–15.0 hold on the tableau, then the door-shaped iris closes over it.
+           13.9–15.0 the iris narrows to the two men, holds, then closes, door-shaped, on Euripides.
    [transition out: a door-shaped iris (the doorway's proportions) closes to the tableau]
 ```
 
