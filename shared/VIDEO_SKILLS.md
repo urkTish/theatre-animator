@@ -10,6 +10,7 @@ Collected 2026-10-26 from links the user shared. All of them run without a GPU (
 | [Vincentwei1021/video-shotcraft](https://github.com/Vincentwei1021/video-shotcraft) | Shot-craft video skill | not checked | Not used yet |
 | [yihui-dev/awesome-opus5-5-videos](https://github.com/yihui-dev/awesome-opus5-5-videos) | Curated Opus 5.5 videos, each with its prompt | MIT | Reference |
 | [athemeroy/awesome-claude-5-5-videos](https://github.com/athemeroy/awesome-claude-5-5-videos) | Video workflows with sources | CC BY 4.0 | Reference |
+| [arjun988/blender-skills](https://github.com/arjun988/blender-skills) | 94 Blender skills (Markdown guidance) with a `blender-director` router: characters, cloth, historical worlds, stop-motion and painterly styles, camera, lookdev (shared by @_guillecasaus, 2026-10-26) | MIT | 14 installed in `.claude/skills/`; used for the `claymation/` sample |
 | Shorts Animator (Tobia Donadon) | Painted, narrated, scored shorts from text | free, sent by email | Not obtained: needs the user's email signup |
 | Motion studio list (@e1genqq) | Remotion, HyperFrames, Three.js, Anime.js, Tone.js, Chatterbox, FFmpeg … | various open source | Three.js used in `motion/` |
 
