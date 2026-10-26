@@ -1,0 +1,211 @@
+{
+  "version": 1,
+  "about": "Look B for the swap proof: identical to ../cast.json except every `representation.style` is \"vase\" (the motion build's vase stand-ins).",
+  "timeline": {
+    "fps": 24,
+    "scene_duration": 10.0,
+    "film_offset_s": 2.4,
+    "film_duration": 14.8
+  },
+  "slots": {
+    "standing_actor": {
+      "label": "Standing masked actor (Dikaiopolis), waiting beside the door",
+      "height": 1.78,
+      "phase": 0.0,
+      "motion": {
+        "root": [
+          {
+            "t": 0.0,
+            "pos": [
+              2.32,
+              0.0,
+              1.12
+            ],
+            "yaw": -64
+          }
+        ],
+        "poses": [
+          {
+            "t": 0.0,
+            "pose": "stand_wait"
+          },
+          {
+            "t": 7.25,
+            "pose": "gesture",
+            "blend": 1.0
+          },
+          {
+            "t": 8.6,
+            "pose": "gesture_hold",
+            "blend": 1.2
+          }
+        ],
+        "breath": 1.0,
+        "sway": 0.6
+      },
+      "representation": {
+        "type": "standin",
+        "style": "vase",
+        "costume": "actor"
+      }
+    },
+    "reclining_figure": {
+      "label": "Reclining masked figure (Euripides) on the couch, rolled out with the platform",
+      "height": 1.74,
+      "phase": 1.3,
+      "motion": {
+        "root": [
+          {
+            "t": 0.0,
+            "pos": [
+              -0.06,
+              0.8,
+              -0.14
+            ],
+            "yaw": 0,
+            "space": "platform"
+          }
+        ],
+        "poses": [
+          {
+            "t": 0.0,
+            "pose": "recline"
+          },
+          {
+            "t": 7.7,
+            "pose": "recline_turn",
+            "blend": 1.3
+          }
+        ],
+        "breath": 0.8
+      },
+      "representation": {
+        "type": "standin",
+        "style": "vase",
+        "costume": "reclining"
+      }
+    },
+    "stagehand_1": {
+      "label": "Stagehand pushing from behind (audience-left), lets go at ~6.1 s (the platform coasts its last ~0.3 m) and slips behind the facade wall; never seen by the audience",
+      "height": 1.72,
+      "phase": 2.1,
+      "motion": {
+        "root": [
+          {
+            "t": 0.0,
+            "pos": [
+              -0.52,
+              0.0,
+              -1.3
+            ],
+            "yaw": 0,
+            "space": "platform"
+          },
+          {
+            "t": 6.05,
+            "pos": [
+              -0.52,
+              0.0,
+              -1.3
+            ],
+            "yaw": 0,
+            "space": "platform"
+          },
+          {
+            "t": 7.0,
+            "pos": [
+              -2.25,
+              0.0,
+              -1.0
+            ],
+            "yaw": -80,
+            "ease": "inout"
+          }
+        ],
+        "poses": [
+          {
+            "t": 0.0,
+            "pose": "crouch_push"
+          },
+          {
+            "t": 5.95,
+            "pose": "crouch_low",
+            "blend": 0.5
+          }
+        ],
+        "gait": {
+          "stride": 0.62,
+          "swing": 16,
+          "knee": 24
+        },
+        "breath": 1.2
+      },
+      "representation": {
+        "type": "standin",
+        "style": "vase",
+        "costume": "stagehand"
+      }
+    },
+    "stagehand_2": {
+      "label": "Stagehand pushing from behind (audience-right), lets go at ~6.1 s (the platform coasts its last ~0.3 m) and slips behind the facade wall; never seen by the audience",
+      "height": 1.75,
+      "phase": 3.4,
+      "motion": {
+        "root": [
+          {
+            "t": 0.0,
+            "pos": [
+              0.52,
+              0.0,
+              -1.3
+            ],
+            "yaw": 0,
+            "space": "platform"
+          },
+          {
+            "t": 6.17,
+            "pos": [
+              0.52,
+              0.0,
+              -1.3
+            ],
+            "yaw": 0,
+            "space": "platform"
+          },
+          {
+            "t": 7.12,
+            "pos": [
+              2.25,
+              0.0,
+              -1.0
+            ],
+            "yaw": 80,
+            "ease": "inout"
+          }
+        ],
+        "poses": [
+          {
+            "t": 0.0,
+            "pose": "crouch_push"
+          },
+          {
+            "t": 6.07,
+            "pose": "crouch_low",
+            "blend": 0.5
+          }
+        ],
+        "gait": {
+          "stride": 0.62,
+          "swing": 16,
+          "knee": 24
+        },
+        "breath": 1.2
+      },
+      "representation": {
+        "type": "standin",
+        "style": "vase",
+        "costume": "stagehand"
+      }
+    }
+  }
+}

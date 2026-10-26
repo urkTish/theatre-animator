@@ -1,38 +1,34 @@
-// The set: wooden skene with its central double door, the ekkyklema with its
-// tableau props, the beaten-earth orchestra, a hint of hillside seating, hills, sky.
+// The set as a white museum model: the wooden skene with its central double door, the ekkyklema with
+// its tableau props, on a white base plate and a dark plinth. Geometry is unchanged from ../motion/js/set.js.
 // Everything here belongs to the "plate". Character slots live in cast.js.
 import * as THREE from 'three';
 import { GB, roundedBox, lathe, tr } from './geom.js';
 import { GEO } from './timeline.js';
-import { timberTextures, earthTextures, weaveTextures } from './textures.js';
-import { patchMaterial, makeSky } from './lighting.js';
-import { rng, fbm } from './util.js';
+import { patchMaterial, PLATE } from './lighting.js';
+import { rng } from './util.js';
 
 export const LAYER_SET = 1;
 
-function std(o) { return patchMaterial(new THREE.MeshStandardMaterial(o)); }
+function std(o, kind = 0) { return patchMaterial(new THREE.MeshStandardMaterial(o), kind); }
 
+// The white model: every part keeps its geometry; only the material changes. Matte white, crisp edges.
+// Joints stay legible because the sheathing behind the boards is a light grey.
 function mats() {
-  const tb = timberTextures(11, { dark: '#352b23', mid: '#5c4f43', light: '#857563', grey: '#7e7a75', weather: 0.6 });
-  const tp = timberTextures(23, { dark: '#2f241b', mid: '#54412f', light: '#7a6650', grey: '#6e6862', weather: 0.4 });
-  const td = timberTextures(37, { dark: '#7a5534', mid: '#b08458', light: '#d4b48c', grey: '#b0a593', weather: 0.18 });
-  const tc = timberTextures(41, { dark: '#3a2416', mid: '#5e3c24', light: '#7e5a3a', grey: '#6a5a4c', weather: 0.05 });
-  const earth = earthTextures(5);
-  const linen = weaveTextures(3, '#e4d9c4');
-  const madder = weaveTextures(4, '#9a4a36');
   const M = {};
-  M.boards = std({ map: tb.map, normalMap: tb.normalMap, roughnessMap: tb.roughnessMap, vertexColors: true, roughness: 1, metalness: 0, envMapIntensity: 0.9 });
-  M.timber = std({ map: tp.map, normalMap: tp.normalMap, roughnessMap: tp.roughnessMap, vertexColors: true, roughness: 1, envMapIntensity: 0.9 });
-  M.deck = std({ map: td.map, normalMap: td.normalMap, roughnessMap: td.roughnessMap, vertexColors: true, roughness: 1, envMapIntensity: 0.9 });
-  M.couch = std({ map: tc.map, normalMap: tc.normalMap, vertexColors: true, roughness: 0.55, envMapIntensity: 1.0 });
-  M.iron = std({ color: '#2a2724', roughness: 0.5, metalness: 0.75, envMapIntensity: 1.1 });
-  M.backing = std({ color: '#2a1d14', roughness: 1 });
-  M.earth = std({ map: earth.map, normalMap: earth.normalMap, normalScale: new THREE.Vector2(0.8, 0.8), vertexColors: true, roughness: 0.97, envMapIntensity: 0.8 });
-  M.linen = std({ map: linen.map, normalMap: linen.normalMap, color: '#ffffff', roughness: 0.92, envMapIntensity: 0.8 });
-  M.madder = std({ map: madder.map, normalMap: madder.normalMap, color: '#ffffff', roughness: 0.9, envMapIntensity: 0.8 });
-  M.glaze = std({ color: '#141110', roughness: 0.22, metalness: 0.0, envMapIntensity: 1.3 });
-  M.terracotta = std({ color: '#b5653a', roughness: 0.55, envMapIntensity: 1.0 });
-  M.hills = new THREE.MeshLambertMaterial({ vertexColors: true });
+  const white = (c = '#f3f3f1', r = 0.9) => std({ color: c, vertexColors: true, roughness: r, metalness: 0 });
+  M.boards = white('#f3f3f1');
+  M.timber = white('#f1f1ef');
+  M.deck = white('#f6f6f4', 0.88);
+  M.couch = white('#f0f0ee', 0.85);
+  M.iron = white('#d6d6d3', 0.75);
+  M.backing = white('#a9aaa8', 1.0);
+  M.linen = std({ color: '#f5f5f3', roughness: 0.92 });
+  M.madder = std({ color: '#e4e2de', roughness: 0.92 });
+  M.glaze = std({ color: '#e9e9e7', roughness: 0.6 });
+  M.terracotta = std({ color: '#e9e9e7', roughness: 0.6 });
+  M.plate = std({ color: '#f0f0ee', roughness: 0.92 }, 1);
+  M.plateSide = std({ color: '#dddbd6', roughness: 0.9 }, 2);
+  M.plinth = std({ color: '#17181a', roughness: 0.5, metalness: 0 }, 2);
   return M;
 }
 
@@ -285,153 +281,30 @@ function buildTableau(M, set, plat) {
   return g;
 }
 
-// ------------------------------------------------------------------ ground, seating, hills
-const FAN_C = new THREE.Vector2(0, 10.5);   // nominal centre of the bench fan (x, z)
-const FAN_R0 = 12.5, ROW = 0.8, RISE = 0.42, ROWS = 22, FAN_A = 124 * Math.PI / 180;
-function smoothstep01(x) { const t = Math.min(1, Math.max(0, x)); return t * t * (3 - 2 * t); }
-export function terrainH(x, z) {
-  const dx = x - FAN_C.x, dz = z - FAN_C.y, rr = Math.hypot(dx, dz);
-  const ang = Math.abs(Math.atan2(dx, dz));          // 0 = straight up the auditorium axis
-  let h = 0;
-  const inFan = 1 - Math.min(1, Math.max(0, (ang - FAN_A) / 0.35));
-  if (rr > FAN_R0 - 0.6) {
-    // terraced rows (one earth step per bench row), smoothing out above the top row
-    const u = Math.min(rr - FAN_R0 + 0.6, ROWS * ROW + 4) / ROW;
-    const step = Math.floor(u) + smoothstep01((u - Math.floor(u) - 0.72) / 0.28);
-    const terr = u < ROWS + 0.5 ? step : u;
-    h = terr * RISE * inFan;
-  }
-  // gentle undulation away from the orchestra
-  const far = Math.min(1, Math.max(0, (Math.hypot(x, z - 3) - 16) / 30));
-  h += (fbm(x * 0.03 + 50, z * 0.03 + 50, 9, 3, 1024) - 0.45) * 6 * far;
-  if (z < -6) h -= Math.min(1, (-6 - z) / 20) * 2.0;
-  return h;
-}
-
-function buildGround(M) {
-  const S = 220, N = 220;
-  const g = new THREE.PlaneGeometry(S, S, N, N);
-  g.rotateX(-Math.PI / 2);
-  const p = g.attributes.position, uv = g.attributes.uv, col = new Float32Array(p.count * 3);
-  for (let i = 0; i < p.count; i++) {
-    // concentrate vertices near the theatre (nonlinear remap)
-    let x = p.getX(i), z = p.getZ(i);
-    const remap = (v) => Math.sign(v) * Math.pow(Math.abs(v) / (S / 2), 1.8) * (S / 2);
-    x = remap(x); z = remap(z) + 4;
-    const y = terrainH(x, z);
-    p.setXYZ(i, x, y, z);
-    uv.setXY(i, x / 4, -z / 4);
-    const low = fbm(x * 0.08 + 7, z * 0.08 + 3, 3, 4, 4096);
-    const slope = Math.min(1, Math.max(0, y / 3));
-    const dist = Math.min(1, Math.hypot(x, z - 4) / 60);
-    const orch = 1 - Math.min(1, Math.max(0, (Math.hypot(x - FAN_C.x, z - FAN_C.y + 1.5) - 7.5) / 4));
-    let rC = 0.86 + 0.26 * low + 0.07 * orch, gC = 0.86 + 0.22 * low + 0.065 * orch, bC = 0.86 + 0.18 * low + 0.05 * orch;
-    // the hillside: drier, slightly olive scrub
-    rC *= 1 - 0.18 * slope; gC *= 1 - 0.06 * slope; bC *= 1 - 0.25 * slope;
-    rC *= 1 - 0.1 * dist; bC *= 1 - 0.15 * dist;
-    col[i * 3] = rC; col[i * 3 + 1] = gC; col[i * 3 + 2] = bC;
-  }
-  g.setAttribute('color', new THREE.BufferAttribute(col, 3));
-  g.computeVertexNormals();
-  const m = mesh(g, M.earth, { shadow: false, receive: true });
-  m.name = 'ground';
-  return m;
-}
-
-function buildSeating(M) {
-  const b = new GB(), r = rng(808), tint = tintFn(r, 0.16, 0.06);
-  for (let i = 0; i < ROWS; i++) {
-    const rr = FAN_R0 + i * ROW + 0.48;   // middle of terrace i
-    const segs = Math.max(6, Math.round(rr * 2 * FAN_A / 2.6));
-    for (let k = 0; k < segs; k++) {
-      const a0 = -FAN_A + (2 * FAN_A) * k / segs, a1 = -FAN_A + (2 * FAN_A) * (k + 1) / segs;
-      const am = (a0 + a1) / 2;
-      const len = 2 * rr * Math.sin((a1 - a0) / 2) - 0.03;
-      const x = FAN_C.x + rr * Math.sin(am), z = FAN_C.y + rr * Math.cos(am);
-      const y = terrainH(x, z);
-      const m = tr(x, y, z, 0, am, 0);
-      const tt = tint();
-      b.box(-len / 2, len / 2, 0.38, 0.44, -0.22, 0.2, { grain: 'x', matrix: m, tint: tt, off: [r() * 9, r() * 9] });
-      b.box(-len / 2, len / 2, -0.25, 0.38, 0.14, 0.2, { grain: 'x', matrix: m, tint: tt.map((v) => v * 0.82), off: [r() * 9, r() * 9] });
-    }
-  }
-  const m = mesh(b.build(), M.timber, { shadow: false, receive: false });
-  m.name = 'seating';
-  // rubble retaining walls at the two wing ends, stepping up with the slope
-  const w = new GB();
-  for (const sgn of [-1, 1]) {
-    const a = sgn * (FAN_A + 0.03);
-    for (let rr = FAN_R0 - 0.4; rr < FAN_R0 + ROWS * ROW; rr += 0.8) {
-      const x = FAN_C.x + rr * Math.sin(a), z = FAN_C.y + rr * Math.cos(a);
-      const y = terrainH(FAN_C.x + (rr + 0.4) * Math.sin(a - sgn * 0.05), FAN_C.y + (rr + 0.4) * Math.cos(a - sgn * 0.05));
-      w.box(-0.3, 0.3, -0.5, y + 0.55, -0.42, 0.42, { matrix: tr(x, 0, z, 0, a, 0), grain: 'y', tint: [0.9 + 0.1 * r(), 0.9, 0.88] });
-    }
-  }
-  const wall = mesh(w.build(), new THREE.MeshStandardMaterial({ color: '#b3a48c', roughness: 1, vertexColors: true }), { shadow: false });
-  patchMaterial(wall.material);
-  const g = new THREE.Group(); g.add(m, wall);
+// ------------------------------------------------------------------ base plate and plinth (the museum model's base)
+function buildBase(M) {
+  const { x0, x1, z0, z1, thick } = PLATE;
+  const g = new THREE.Group(); g.name = 'base';
+  const top = mesh(new THREE.PlaneGeometry(x1 - x0, z1 - z0, 1, 1).rotateX(-Math.PI / 2), M.plate, { shadow: false, receive: true });
+  top.position.set((x0 + x1) / 2, 0, (z0 + z1) / 2);
+  top.name = 'ground';
+  const side = mesh(new THREE.BoxGeometry(x1 - x0, thick, z1 - z0), M.plateSide, { shadow: false, receive: true });
+  side.position.set((x0 + x1) / 2, -thick / 2 - 0.002, (z0 + z1) / 2);
+  const plinth = mesh(new THREE.BoxGeometry(x1 - x0 + 2.4, 30, z1 - z0 + 2.4), M.plinth, { shadow: false, receive: true });
+  plinth.position.set((x0 + x1) / 2, -thick - 15, (z0 + z1) / 2);
+  g.add(top, side, plinth);
   return g;
 }
 
-function buildHills(M) {
-  const b = new GB(), r = rng(4242);
-  // distant ridges to the south, east and west, in two layers of haze
-  const ridge = (rad, h0, hv, seed, tintC, a0, a1) => {
-    const n = 120, pos = [];
-    const g = new THREE.BufferGeometry();
-    const verts = [], cols = [], idx = [];
-    for (let i = 0; i <= n; i++) {
-      const a = a0 + (a1 - a0) * i / n;
-      const hh = h0 + hv * fbm(i * 0.06 + seed, seed * 0.3, seed, 4, 1024);
-      const x = Math.sin(a) * rad, z = -Math.cos(a) * rad + 4;
-      verts.push(x, -8, z, x, hh, z);
-      cols.push(...tintC, ...tintC);
-      if (i < n) { const k = i * 2; idx.push(k, k + 2, k + 1, k + 1, k + 2, k + 3); }
-    }
-    g.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
-    g.setAttribute('color', new THREE.Float32BufferAttribute(cols, 3));
-    g.setIndex(idx); g.computeVertexNormals();
-    return g;
-  };
-  const grp = new THREE.Group(); grp.name = 'hills';
-  const mk = (geo, c) => { const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ vertexColors: true, fog: false, side: THREE.DoubleSide })); m.layers.enable(LAYER_SET); return m; };
-  grp.add(mk(ridge(420, 8, 55, 3, [0.60, 0.66, 0.74], -2.2, 2.2)));
-  grp.add(mk(ridge(260, 3, 24, 7, [0.52, 0.53, 0.47], -2.0, 2.0)));
-  return grp;
-}
-
-// low trees in the far middle ground: clustered silvery olive canopies and slender cypresses
-function buildTrees(M) {
-  const b = new GB(), cy = new GB(), r = rng(999);
-  const leaf = std({ color: '#ffffff', vertexColors: true, roughness: 0.95, envMapIntensity: 0.7 });
-  const trunk = std({ color: '#4a3a2c', roughness: 1 });
-  const blob = new THREE.IcosahedronGeometry(1, 2);
-  const cypress = lathe([[0.0, 0], [0.38, 0.2], [0.55, 1.2], [0.5, 3.0], [0.32, 4.8], [0.12, 5.9], [0.0, 6.2]], 12);
-  const tb = new GB();
-  const spots = [];
-  for (let i = 0; i < 46; i++) {
-    const a = (r() - 0.5) * 2.4, d = 18 + r() * 40;
-    const x = Math.sin(a) * d * 1.4, z = -Math.cos(a) * d - 2;
-    if (Math.abs(x) < 9 && z > -9) continue;
-    spots.push([x, z, r()]);
-  }
-  const olive = [0.11, 0.13, 0.065], dark = [0.035, 0.05, 0.028];   // linear (vertex colours)
-  for (const [x, z, k] of spots) {
-    const y = terrainH(x, z);
-    if (k < 0.22) { cy.add(cypress, tr(x, y, z, 0, k * 10, 0, 0.8 + k * 1.2), dark); continue; }
-    const s = 1.2 + k * 1.5;
-    for (let j = 0; j < 5; j++) {
-      const ox = (r() - 0.5) * 1.6 * s, oz = (r() - 0.5) * 1.4 * s, oy = 1.1 * s + r() * 0.6 * s;
-      const sc = s * (0.55 + r() * 0.35);
-      const m = new THREE.Matrix4().compose(new THREE.Vector3(x + ox, y + oy, z + oz), new THREE.Quaternion().setFromEuler(new THREE.Euler(0, r() * 6, 0)), new THREE.Vector3(sc * 1.15, sc * 0.72, sc));
-      const v = 0.85 + r() * 0.3;
-      b.add(blob, m, olive.map((c) => c * v));
-    }
-    tb.add(new THREE.CylinderGeometry(0.12, 0.22, s * 1.2, 6), tr(x, y + s * 0.5, z, 0.08, 0, 0.1));
-  }
-  const g = new THREE.Group();
-  g.add(mesh(b.build(), leaf, { shadow: false }), mesh(cy.build(), leaf, { shadow: false }), mesh(tb.build(), trunk, { shadow: false }));
-  return g;
+// soften the per-board tints: a white model reads by its edges and shadows, not by paint
+function whiten(root) {
+  root.traverse((o) => {
+    const c = o.isMesh && o.geometry.attributes.color;
+    if (!c || o.geometry.userData.whitened) return;
+    o.geometry.userData.whitened = true;
+    for (let i = 0; i < c.array.length; i++) c.array[i] = Math.min(1, 0.975 + (c.array[i] - 1) * 0.16);
+    c.needsUpdate = true;
+  });
 }
 
 export function buildSet(scene) {
@@ -444,12 +317,8 @@ export function buildSet(scene) {
   set.platform = buildPlatform(M, set);
   root.add(set.platform.root);
   set.tableau = buildTableau(M, set, set.platform);
-  root.add(buildGround(M));
-  root.add(buildSeating(M));
-  root.add(buildTrees(M));
-  root.add(buildHills(M));
-  const sky = makeSky(); sky.layers.enable(LAYER_SET);
-  root.add(sky);
+  root.add(buildBase(M));
+  whiten(root);
   scene.add(root);
   set.root = root;
   return set;

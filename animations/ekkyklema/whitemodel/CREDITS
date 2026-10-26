@@ -1,0 +1,25 @@
+Ekkyklema · Projection on White Model (15 s sample)
+
+Made entirely in code: no generated images, no stock footage, no photographs. The model is the motion build's
+reconstruction (../motion), restyled; every light, colour, label and line is drawn by the page (three.js + 2D canvas).
+
+STYLE AND TECHNIQUE
+- Lemo-Opuscar, "Projection on White Model" style (styles/white-model/STYLE.md), DIRECTOR.md and TECHNIQUE.md,
+  by LemoLab. https://github.com/lemomo-ai/lemo-opuscar — code MIT (Copyright (c) 2026 LemoLab), content CC BY 4.0.
+  Adapted, not copied: the projection-as-light term, the readout / pin / range-line grammar, the house-light / relay /
+  lamp-strike sequence and the sound palette. What was taken, and how it changed, is listed in README.md.
+- Tools used from the library, unmodified: core/audio/sfx.py, core/audio/sampler.py, core/render/mux.sh,
+  core/render/sheet.py (MIT).
+
+SAMPLES (sound)
+- Versilian Community Sample Library (VCSL), Versilian Studios — CC0 1.0. Bowed vibraphone, vibraphone, glockenspiel,
+  marimba, hand chimes, tubular bells. Fetched with lemo-opuscar's tools/fetch.sh instruments vcsl.
+- All other sounds (room tone, projector fan, relays, lamp strike, door creak, wheel rumble, ticks) are synthesised.
+
+FONTS (SIL Open Font License 1.1, licence texts in fonts/)
+- Inter Tight (The Inter Project Authors), from the @fontsource/inter-tight npm package (figures)
+- IBM Plex Mono (IBM), from the @fontsource/ibm-plex-mono npm package (numbers, identity line)
+- Inter (The Inter Project Authors) and GFS Didot (Greek Font Society), vendored by ../motion (labels, Greek)
+
+LIBRARIES
+- three.js 0.170.0, MIT (vendor/three/)

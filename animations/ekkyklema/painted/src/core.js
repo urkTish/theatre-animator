@@ -274,6 +274,7 @@ function defineBrushes() {
 // ---------- frame ----------
 async function setup() {
   createCanvas(W, H, WEBGL); pixelDensity(1); noLoop();
+  if (location.search.includes('noaa')) setAttributes('antialias', false);
   brush.scaleBrushes(5); defineBrushes();
   paperG = makePaper(); grainC = makeGrain(); glowTex = makeGlowTex(); letG = createGraphics(W, H); letG.pixelDensity(1);
   outC = document.getElementById('out'); outX = outC.getContext('2d');
@@ -286,10 +287,16 @@ function draw() {
   LETTERS = []; CAM = LAST_CAM = null;
   push(); translate(-W / 2, -H / 2);
   BOILN = Math.floor(T * BOIL); CLAWD_N = 0; boilSeed('frame'); noiseSeed(77);
-  image(paperG, 0, 0);
+  // ekkyklema: the cast pass paints the characters on a transparent canvas with an alpha-correct blend (src/layers.js)
+  const castPass = typeof PASS !== 'undefined' && PASS === 'cast';
+  // (the sample's plate covers the frame with opaque paint, so its paper never shows; the grain is multiplied after)
+  if (castPass) { clear(); alphaShader(true); } else { if (window.LOOP || typeof PASS === 'undefined' || PASS !== 'plate') image(paperG, 0, 0); else background(PAL.paper); if (typeof alphaShader !== 'undefined') alphaShader(false); }
   drawWorld(T);
+  if (castPass) alphaShader(false);
   pop();
 }
+// One finished frame into outC. src/layers.js replaces it with the layered (plate + cast) frame for the video.
+let FRAME = async t => { T = t; await redraw(); composite(t); };
 function composite(t) {
   const c = outX;
   c.globalCompositeOperation = 'source-over'; c.globalAlpha = 1;
@@ -298,7 +305,7 @@ function composite(t) {
   c.globalCompositeOperation = 'multiply'; c.drawImage(grainC, 0, 0);
   c.globalCompositeOperation = 'source-over';
 }
-window.renderAt = async (t, type = 'image/png', q = .92) => { T = t; await redraw(); composite(t); return outC.toDataURL(type, q); };
+window.renderAt = async (t, type = 'image/png', q = .92) => { await FRAME(t); return outC.toDataURL(type, q); };
 // Contact sheet of several times, for visual checks: returns { url, ms[] }. crop = [x, y, w, h] fills each cell with just
 // that region of the frame, at full resolution (for checking faces, hands and contacts up close). at = [x, y, w, h]
 // instead crops w × h around the WORLD point (x, y), wherever each frame's camera put it (a foot, a splash, a prop on
@@ -308,7 +315,7 @@ window.renderSheet = async (times, cols = 3, w = 640, crop = null, at = null) =>
   const [, , cw, ch] = at || crop || [0, 0, W, H], h = Math.round(w * ch / cw), rows = Math.ceil(times.length / cols), sc = document.createElement('canvas');
   sc.width = cols * w; sc.height = rows * h; const c = sc.getContext('2d'), ms = [];
   for (let i = 0; i < times.length; i++) {
-    const t0 = performance.now(); T = times[i]; await redraw(); composite(times[i]); ms.push(Math.round(performance.now() - t0));
+    const t0 = performance.now(); await FRAME(times[i]); ms.push(Math.round(performance.now() - t0));
     const x = (i % cols) * w, y = Math.floor(i / cols) * h;
     const [cx, cy] = at ? toScreen(at[0], at[1], LAST_CAM).map((v, j) => v - (j ? ch : cw) / 2) : crop || [0, 0];
     c.drawImage(outC, cx, cy, cw, ch, x, y, w, h); c.fillStyle = 'rgba(0,0,0,.65)'; c.fillRect(x, y, 84, 24); c.fillStyle = '#fff'; c.font = '15px sans-serif'; c.fillText(times[i].toFixed(2) + 's', x + 6, y + 17);

@@ -2,7 +2,7 @@
 //   scene -> HDR target (4x MSAA, depth texture)
 //         -> screen-space ambient occlusion (half resolution, depth only)
 //         -> depth of field (gather, driven by the camera's focus/aperture)
-//         -> output: AgX tone map, grade, and (layer "all" only) vignette + 2% grain.
+//         -> output: neutral tone map, grade, and (layer "all" only) a vignette.
 // Layers: "all" | "plate" | "cast" | "matte". See README.md.
 import * as THREE from 'three';
 import { LAYER_SET } from './set.js';
@@ -129,13 +129,11 @@ uniform float seed;
 uniform vec2 res;
 float hash(vec2 p) { p = fract(p * vec2(443.897, 441.423)); p += dot(p, p.yx + 19.19); return fract((p.x + p.y) * p.x); }
 vec3 grade(vec3 c) {
-  // gentle S-curve and a warm highlight / cool shadow split
+  // neutral for a white model: a gentle S-curve, a cool near-black floor, no warm cast
   c = clamp(c, 0.0, 1.0);
-  c = clamp((c - 0.018) / 0.982, 0.0, 1.0);                 // a slightly deeper black point
-  c = mix(c, c * c * (3.0 - 2.0 * c), 0.34);
-  float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
-  c = mix(vec3(l), c, 1.10);                                 // a touch more colour after AgX
-  c += (vec3(0.012, 0.004, -0.012) * smoothstep(0.35, 0.9, l)) + (vec3(-0.008, 0.0, 0.012) * (1.0 - smoothstep(0.05, 0.4, l)));
+  c = clamp((c - 0.012) / 0.988, 0.0, 1.0);
+  c = mix(c, c * c * (3.0 - 2.0 * c), 0.22);
+  c += vec3(-0.004, 0.0, 0.006) * (1.0 - smoothstep(0.02, 0.25, dot(c, vec3(0.2126, 0.7152, 0.0722))));
   return c;
 }
 void main() {
@@ -151,9 +149,7 @@ void main() {
   if (finish > 0.5) {
     vec2 q = vUv - 0.5; q.x *= res.x / res.y;
     float v = smoothstep(1.05, 0.25, length(q * vec2(0.92, 1.05)));
-    c *= mix(0.72, 1.0, v);
-    float g = hash(gl_FragCoord.xy + seed * 17.13) + hash(gl_FragCoord.xy * 1.37 + seed * 3.7) - 1.0;
-    c += g * 0.02 * (0.6 + 0.4 * (1.0 - dot(c, vec3(0.33))));
+    c *= mix(0.62, 1.0, v);        // vignette only; grain is added in ffmpeg (mux.sh), so frames stay compressible
   }
   gl_FragColor = vec4(c * a, a);
 }`;

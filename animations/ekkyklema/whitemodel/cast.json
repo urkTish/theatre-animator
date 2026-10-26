@@ -1,9 +1,11 @@
 {
   "version": 1,
-  "about": "Character slots for the ekkyklema roll-out sample. Edit only `representation` to swap who fills a slot; `motion` is tied to the shared timeline (js/timeline.js) and drives the canonical skeleton. See README.md.",
+  "about": "Character slots for the white-model ekkyklema film. Edit only `representation` to swap who fills a slot; `motion` is tied to the shared scene timeline (js/timeline.js, scene time = film time - 2.4 s, see js/film.js) and drives the canonical skeleton. See README.md.",
   "timeline": {
     "fps": 24,
-    "duration": 10.0
+    "scene_duration": 10.0,
+    "film_offset_s": 2.4,
+    "film_duration": 14.8
   },
   "slots": {
     "standing_actor": {
@@ -43,7 +45,7 @@
       },
       "representation": {
         "type": "standin",
-        "style": "clay",
+        "style": "white",
         "costume": "actor"
       }
     },
@@ -79,7 +81,7 @@
       },
       "representation": {
         "type": "standin",
-        "style": "clay",
+        "style": "white",
         "costume": "reclining"
       }
     },
@@ -140,7 +142,7 @@
       },
       "representation": {
         "type": "standin",
-        "style": "clay",
+        "style": "white",
         "costume": "stagehand"
       }
     },
@@ -201,7 +203,7 @@
       },
       "representation": {
         "type": "standin",
-        "style": "clay",
+        "style": "white",
         "costume": "stagehand"
       }
     }

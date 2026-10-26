@@ -1,4 +1,5 @@
-// Built-in stand-in figures, in two styles:
+// Built-in stand-in figures, in three styles ("white" added for the white-model film):
+//   "white": plaster-white museum maquettes with unpainted masks (stagehands dark, as shared/STYLE.md asks)
 //   "clay": smooth matte maquettes with painted theatre masks and draped robes
 //   "vase": Athenian red-figure: terracotta bodies, black glaze hair, black contour
 //           and drapery lines (flat-shaded 3D with an ink outline)
@@ -17,6 +18,12 @@ const PALETTES = {
     actor: ['#dccdbb', '#ebe4d8', '#c3ad94', '#7a6a5c', '#a8927a', '#a8927a'],
     reclining: ['#dccdbb', '#ebe4d8', '#bfa58a', '#7a6a5c', '#a8927a', '#a8927a'],
     stagehand: ['#9a8572', '#4e4842', '#4e4842', '#3c3632', '#35302c', '#3c3632'],
+  },
+  // white museum maquettes: one plaster white, the drapery a shade cooler; stagehands near-black so the dark interior hides them
+  white: {
+    actor: ['#f3f2ef', '#f6f5f2', '#e8e7e3', '#dedcd8', '#d9d7d2', '#dedcd8'],
+    reclining: ['#f3f2ef', '#f6f5f2', '#e6e4e0', '#dedcd8', '#d9d7d2', '#dedcd8'],
+    stagehand: ['#2b2b2a', '#1f1f1e', '#1f1f1e', '#181817', '#161615', '#181817'],   // dark, "not part of the fiction" (shared/STYLE.md)
   },
   vase: {
     actor: ['#c8743c', '#c8743c', '#c47040', '#17110d', '#17110d', '#c8743c'],
@@ -118,14 +125,18 @@ export function figurePrims(J, costume, s = 1) {
 function maskTexture(style, kind) {
   const c = document.createElement('canvas'); c.width = c.height = 512;
   const g = c.getContext('2d');
-  const vase = style === 'vase';
-  g.fillStyle = vase ? '#c8743c' : '#efe7d8'; g.fillRect(0, 0, 512, 512);
-  if (!vase) {   // a little tonal modelling painted into the plaster
+  const vase = style === 'vase', white = style === 'white';
+  g.fillStyle = vase ? '#c8743c' : white ? '#f4f3f0' : '#efe7d8'; g.fillRect(0, 0, 512, 512);
+  if (white) {   // an unpainted plaster mask: the openings read as soft shadow, not paint
+    const grd = g.createRadialGradient(256, 230, 40, 256, 256, 300);
+    grd.addColorStop(0, 'rgba(255,255,255,0.0)'); grd.addColorStop(1, 'rgba(90,92,96,0.10)');
+    g.fillStyle = grd; g.fillRect(0, 0, 512, 512);
+  } else if (!vase) {   // a little tonal modelling painted into the plaster
     const grd = g.createRadialGradient(256, 230, 40, 256, 256, 300);
     grd.addColorStop(0, 'rgba(255,255,255,0.0)'); grd.addColorStop(1, 'rgba(120,100,80,0.18)');
     g.fillStyle = grd; g.fillRect(0, 0, 512, 512);
   }
-  const ink = vase ? '#17110d' : '#2a221d';
+  const ink = vase ? '#17110d' : white ? '#8a8986' : '#2a221d';
   g.strokeStyle = ink; g.fillStyle = ink; g.lineCap = 'round'; g.lineJoin = 'round';
   // u: 0..1 left->right across the face, v: 0 top .. 1 chin (canvas y)
   const eye = (cx, cy, flip) => {
@@ -152,7 +163,7 @@ function maskTexture(style, kind) {
     g.lineWidth = 5; g.beginPath(); g.moveTo(256, 230); g.quadraticCurveTo(246, 290, 262, 316); g.stroke();
     if (kind !== 'young') { g.lineWidth = 4; for (let i = 0; i < 9; i++) { g.beginPath(); g.moveTo(130 + i * 31, 420); g.quadraticCurveTo(150 + i * 28, 470, 160 + i * 24, 505); g.stroke(); } }
   } else {
-    g.strokeStyle = 'rgba(42,34,29,0.55)'; g.lineWidth = 4;
+    g.strokeStyle = white ? 'rgba(120,120,116,0.5)' : 'rgba(42,34,29,0.55)'; g.lineWidth = 4;
     g.beginPath(); g.ellipse(256, 372, 52, 38, 0, 0.15 * Math.PI, 0.85 * Math.PI); g.stroke();
   }
   const t = new THREE.CanvasTexture(c);
@@ -202,8 +213,8 @@ function maskGeometry() {
 }
 
 // ------------------------------------------------------------------ materials
-function clayMaterial() {
-  return patchMaterial(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.82, metalness: 0, envMapIntensity: 1.0 }));
+function clayMaterial(rough = 0.82) {
+  return patchMaterial(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: rough, metalness: 0, envMapIntensity: 1.0 }));
 }
 
 function vaseMaterial() {
@@ -275,7 +286,7 @@ export class StandIn {
     this.res = opts.resolution || (this.costume === 'stagehand' ? 0.016 : 0.012);
     this.palette = (opts.palette || PALETTES[this.style][this.costume]).map((c) => new THREE.Color(c));
     this.group = new THREE.Group();
-    this.body = new THREE.Mesh(new THREE.BufferGeometry(), this.style === 'vase' ? vaseMaterial() : clayMaterial());
+    this.body = new THREE.Mesh(new THREE.BufferGeometry(), this.style === 'vase' ? vaseMaterial() : clayMaterial(this.style === 'white' ? 0.9 : 0.82));
     this.body.castShadow = true; this.body.receiveShadow = true;
     this.group.add(this.body);
     if (this.style === 'vase') {
