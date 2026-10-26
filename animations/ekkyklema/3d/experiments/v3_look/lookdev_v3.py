@@ -501,9 +501,19 @@ if IN_BLENDER:
         rot = hdri_angle - math.atan2(d.y, d.x)
         _HDRI_PX["rot"] = rot
         tc = nt.n("ShaderNodeTexCoord")
+        # the pure-sky HDRI has a darker 'ground' below its horizon; the model's land ends a fraction of a
+        # degree below the horizon at 42 km, so keep every lookup just above it (no dark rim on the skyline)
+        sp = nt.n("ShaderNodeSeparateXYZ")
+        nt.l(tc.outputs["Generated"], sp.inputs[0])
+        cz = nt.n("ShaderNodeCombineXYZ")
+        nt.l(sp.outputs["X"], cz.inputs["X"])
+        nt.l(sp.outputs["Y"], cz.inputs["Y"])
+        nt.l(mth(nt, "MAXIMUM", sp.outputs["Z"], 0.012), cz.inputs["Z"])
+        nv = nt.n("ShaderNodeVectorMath", operation="NORMALIZE")
+        nt.l(cz.outputs[0], nv.inputs[0])
         mp = nt.n("ShaderNodeMapping")
         mp.inputs["Rotation"].default_value = (0.0, 0.0, rot)
-        nt.l(tc.outputs["Generated"], mp.inputs["Vector"])
+        nt.l(nv.outputs[0], mp.inputs["Vector"])
         env = nt.n("ShaderNodeTexEnvironment")
         env.image = img(HDRI)
         env.interpolation = "Cubic"
@@ -1966,7 +1976,9 @@ if IN_BLENDER:
         nt.x = 600
         n1 = nz_tex(nt, tc.outputs["Object"], 0.02, 5.0, 0.6)
         n2 = nz_tex(nt, tc.outputs["Object"], 0.15, 3.0, 0.6)
-        v = mth(nt, "MULTIPLY", smooth_range(nt, n1, 0.3, 0.7, 0.72, 1.18), smooth_range(nt, n2, 0.3, 0.7, 0.9, 1.08))
+        n3 = nz_tex(nt, tc.outputs["Object"], 0.045, 4.0, 0.65)
+        v = mth(nt, "MULTIPLY", smooth_range(nt, n1, 0.3, 0.7, 0.70, 1.2), smooth_range(nt, n2, 0.3, 0.7, 0.88, 1.08))
+        v = mth(nt, "MULTIPLY", v, smooth_range(nt, n3, 0.5, 0.62, 1.0, 0.55))     # dark patches of pine and maquis
         mul = nt.n("ShaderNodeMix", data_type="RGBA", blend_type="MULTIPLY")
         mul.inputs["Factor"].default_value = 1.0
         nt.l(ramp.outputs["Color"], mul.inputs["A"])
@@ -2067,7 +2079,7 @@ if IN_BLENDER:
             if len(hc) and kd.find((x, y, 0.0))[2] < clear:
                 return False
             r = (Vector((x, y)) - ORCH_C).length
-            if r < 54.0 or (abs(x) < 16 and -9 < y < 14):
+            if r < 47.5 or (abs(x) < 16 and -9 < y < 14):
                 return False                      # theatron, orchestra, skene
             if (Vector((x, y)) - Vector((-65.0, 192.0))).length < 75:
                 return False                      # the plateau
@@ -2146,8 +2158,8 @@ if IN_BLENDER:
                 c.objects.unlink(o)
             cc.objects.link(o)
         cyp = []
-        spots = [(-38, -46), (-30, -40), (35, -50), (44, -58), (-60, -78), (-20, -112), (22, -95), (-52, 40),
-                 (-120, -12), (-138, 30), (90, 20)]
+        spots = [(-38, -46), (-30, -40), (35, -50), (44, -58), (-60, -78), (-20, -112), (22, -95), (-55, 44),
+                 (-61, 52), (-49, 36), (-120, -12), (-138, 30), (90, 20)]
         for (x, y) in spots:
             x += rng.uniform(-3, 3)
             y += rng.uniform(-3, 3)
@@ -2228,7 +2240,7 @@ if IN_BLENDER:
         rl = nt.n("CompositorNodeRLayers")
         # aerial perspective from the mist pass (linear 40 m .. 9 km), toward a pale late-afternoon haze
         mul = nt.n("CompositorNodeMath", operation="MULTIPLY")
-        mul.inputs[1].default_value = 0.85 if shot == "establishing" else 0.78
+        mul.inputs[1].default_value = 1.0
         nt.l(rl.outputs["Mist"], mul.inputs[0])
         pw = nt.n("CompositorNodeMath", operation="POWER")
         pw.inputs[1].default_value = 0.85
@@ -2306,8 +2318,8 @@ if IN_BLENDER:
         return cam
 
     AUD_ROW, AUD_ANG = 1, -4.0             # second bench, just west of the central aisle
-    AUD_LENS = 45.0
-    AUD_EYE = 0.70                         # seated eye height above the plank (m)
+    AUD_LENS = 50.0
+    AUD_EYE = 0.66                         # seated eye height above the plank (m), leaning in a little
     AUD_TOP_MARGIN = 1.3                   # degrees of sky kept above the skene roof
 
     def seat_on_bench(row, ang):
