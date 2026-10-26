@@ -76,7 +76,13 @@
   function transitions(t) {
     const wp = t < .62 ? .5 + t / 1.24 : 0, W_ = wipePolys(wp), iris = t > IRIS.t0;
     if (PASS === 'cast') { if (W_.length) holdOut(W_.map(w => ({ shape: { pts: w.pts, o: { ink: null } } }))); if (iris) { const ip = irisPts(t); if (Math.abs(ip[0][1] - ip[1][1]) < 4) holdOut([{ outside: [[0, 0], [1, 0], [1, 1]] }]); else holdOut([{ outside: dilate(ip, 2) }]); } return; }
-    for (const w of W_) { boilSeed('wipe paint' + w.i); paint(w.pts, { wash: w.i % 2 ? WIPE[0] : WIPE[1], washOp: 255, fill: w.i % 2 ? WIPE[1] : WIPE[0], fillOp: 60, bleed: .05, tex: .8, border: .6, ink: null }); }
+    // (the kit's wipe adds a watercolour fill and charcoal hatching; in software GL that costs ~30 s a frame, so the
+    // strokes are flat paint with a few dry-brush streaks of the other colour)
+    for (const w of W_) {
+      boilSeed('wipe paint' + w.i); setPaint(w.pts, { wash: w.i % 2 ? WIPE[0] : WIPE[1], ink: null });
+      const ys = w.pts.map(p => p[1]), xs = w.pts.map(p => p[0]), y0 = Math.min(...ys), y1 = Math.max(...ys), x0 = Math.max(-50, Math.min(...xs)), x1 = Math.min(W + 50, Math.max(...xs));
+      if (x1 - x0 > 80) for (let k = 0; k < 3; k++) { const y = lerp(y0, y1, .25 + k * .25) + jit(6); inkLine([[x0 + 30, y], [(x0 + x1) / 2, y + jit(8)], [x1 - 30, y + jit(6)]], 2.2, w.i % 2 ? WIPE[1] : WIPE[0], 'dry', .4); }
+    }
     if (iris) { const ip = irisPts(t); boilSeed('iris paint'); if (Math.abs(ip[0][1] - ip[1][1]) < 4) paint(rectPts(-60, -60, W + 120, H + 120), { wash: '#2A1E1A', ink: null }); else irisShape(ip, '#2A1E1A'); }
   }
   // ---------------------------------------------------------------- the shot

@@ -102,6 +102,9 @@ async function openPage(tag = '') {
     const ok = await page.evaluate(name => { if (!LOOPS[name]) return false; window.LOOP = LOOPS[name]; return true; }, args.loop);
     if (!ok) { console.error(`no loop named "${args.loop}"`); process.exit(1); }
   }
+  // p5.brush loses the first wash in the first frame a page paints (a first-use quirk of its fill mask, seen in software
+  // GL); one throwaway frame first, so every real frame is painted the same way
+  await page.evaluate(() => window.renderAt(0, 'image/jpeg', .5));
   return page;
 }
 const frameOf = async (page, t, type, q) => {

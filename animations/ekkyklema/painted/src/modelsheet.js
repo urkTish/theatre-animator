@@ -2,8 +2,6 @@
 //   node render.mjs --soft-gl --loop=model_actor --sheet=0.3 --cols=1 --w=1920 --out=...
 // ?looks=B swaps every slot to its B look (the same rigs and poses).
 (() => {
-  // prime p5.brush's composite before the first real mark (otherwise the first wash of a sheet can come out white)
-  const prime = () => { boilSeed('prime'); for (const c of ['#7A4B2C', '#A9432F']) paint([[2, 2], [8, 2], [8, 8], [2, 8]], { wash: c, ink: null }); flushBrush(); image(paperG, 0, 0); };
   const label = (txt, x, y, size = 22) => letter(txt, x, y, size, PAL.ink, { ink: false, alpha: .75, font: `${size}px Georgia, serif` });
   const floor = (y, x0 = 60, x1 = W - 60) => { boilSeed('floor' + y); inkLine([[x0, y + 4], [(x0 + x1) / 2, y + 2], [x1, y + 5]], .6, mixCol(PAL.paper, PAL.ink, .35), 'inkfine', .5); };
   const look = name => LOOKS[(window.LOOKSET === 'B' && LOOKS[name + '_B']) ? name + '_B' : name];
@@ -19,7 +17,6 @@
     paint(P([[.3, .0], [.82, .0], [.86, .1], [.8, .24], [.5, .27], [.34, .2]]), { wash: '#A9432F', ink: PAL.ink, sw: .6, curv: .5 });
   }
   LOOPS.model_actor = t => {
-    prime();
     const k = 300, gy = 900, poses = [
       ['front', { heading: 0 }], ['3/4', { heading: .125 }], ['side', { heading: .25 }],
       ['waits (3/4 left)', { heading: -.125, headHeading: -.125, hip: -.02, r: { a: .35, e: .9, h: 'relax' }, l: { a: .3, e: 1.0, h: 'relax' } }],
@@ -33,7 +30,6 @@
   };
   LOOPS.model_actor.len = 1;
   LOOPS.model_euripides = t => {
-    prime();
     const k = 330, W_ = { hand: [.17, .33], h: 'hold', stylus: true, w: -.4 }, poses = [
       ['writing', { headHeading: 0, headTilt: .24, headDy: -.025, r: W_ }],
       ['looks up', { headHeading: .125, headTilt: -.05, r: W_ }],
@@ -42,12 +38,11 @@
     ];
     poses.forEach(([name, P], i) => {
       const x = 560 + (i % 2) * 820, y = 400 + Math.floor(i / 2) * 470;
-      couch(x, y, k, 'couch' + i); person(EUR, 'euripides', P, x, y, k, 'me' + i); label(name, x, y + 200);
+      couch(x, y, k, 'couch' + i); person(EUR, 'euripides', P, x, y, k, 'me' + i); label(name, x + .02 * k, y + .3 * k);
     });
   };
   LOOPS.model_euripides.len = 1;
   LOOPS.model_stagehands = t => {
-    prime();
     const k = 300, gy = 900, poses = [
       ['front', 'stagehand_a', { heading: 0 }], ['3/4', 'stagehand_a', { heading: .125 }], ['side', 'stagehand_a', { heading: .25 }],
       ['pushing', 'stagehand_a', { heading: 0, crouch: .45, headDown: true, headDy: -.07, r: { a: .35, e: -.9, h: 'flat' }, l: { a: .35, e: -.9, h: 'flat' }, feet: { r: { dx: -.06 }, l: { dx: .06 } } }],
