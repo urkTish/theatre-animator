@@ -24,6 +24,17 @@
     if (!X.noPlat) { if (t < DOORS_OPEN) { paintW(P.L); paintShapes(leafShapes(t)); } else { paintShapes(leafShapes(t)); paintW(P.L); } }
     if (!X.noFacade) paintFacade(F);
     if (!X.noPlat) paintW(P.L, true);   // the part of the platform and tableau that is out in front of the facade
+    knockMarks(t);
+  }
+  // the knock, as painted marks on the door where the knuckles land (placed from the rig, so the same for every look)
+  function knockMarks(t) {
+    for (const tk of TIMES.knock) {
+      const a = t - tk; if (a < 0 || a > .2) continue;
+      const s = slotAt('standing_actor', tk), h = s.R.flip ? s.R.anchors.hand_r : s.R.anchors.hand_r, p = [s.sx + (s.R.flip ? -1 : 1) * h[0] * s.k, s.sy - h[1] * s.k];
+      const k = 1 - a / .2, r0 = 22 + 60 * a, r1 = r0 + 26 * k;
+      boilSeed('knock' + tk);
+      for (const ang of [-2.5, -3.1, 2.6]) inkLine([[p[0] + Math.cos(ang) * r0, p[1] + Math.sin(ang) * r0], [p[0] + Math.cos(ang) * r1, p[1] + Math.sin(ang) * r1]], 1.1 * k + .2, PAL.ink, 'ink', 0);
+    }
   }
   // ---------------------------------------------------------------- cast: the characters, back to front, held out
   function paintCast(t) {
@@ -57,8 +68,8 @@
   const IRIS = { t0: 13.95, hold: 14.45, t1: 14.96 };
   function headOn(name, t) { const s = slotAt(name, t), h = s.R.anchors.head; return [s.sx + (s.R.flip ? -1 : 1) * h[0] * s.k, s.sy - h[1] * s.k]; }
   function irisPts(t) {
-    const he = headOn('reclining_figure', t), ha = headOn('standing_actor', t), u = ease(seg(t, IRIS.t0, IRIS.t1));
-    const c = [lerp((he[0] + ha[0]) / 2, he[0], u), lerp((he[1] + ha[1]) / 2 + 120, he[1] + 40, u)], hh = t < IRIS.hold ? lerp(1500, 430, easeOut(seg(t, IRIS.t0, IRIS.hold))) : lerp(430, 0, easeIn(seg(t, IRIS.hold + .05, IRIS.t1))), hw = hh * GEO.doorW / GEO.doorH;
+    const he = headOn('reclining_figure', t), ha = headOn('standing_actor', t), u = ease(seg(t, IRIS.hold, IRIS.t1));   // holds on both, then closes onto Euripides
+    const c = [lerp((he[0] + ha[0]) / 2, he[0], u), lerp((he[1] + ha[1]) / 2 + 120, he[1] + 40, u)], hh = t < IRIS.hold ? lerp(1500, 650, easeOut(seg(t, IRIS.t0, IRIS.hold))) : lerp(650, 0, easeIn(seg(t, IRIS.hold + .05, IRIS.t1))), hw = hh * GEO.doorW / GEO.doorH;
     boilSeed('iris');
     return [[c[0] - hw, c[1] + hh], [c[0] - hw, c[1] - hh], [c[0] + hw, c[1] - hh], [c[0] + hw, c[1] + hh]].map(([x, y]) => [x + jit(2), y + jit(2)]);
   }

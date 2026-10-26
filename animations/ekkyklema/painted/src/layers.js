@@ -9,6 +9,7 @@
 // copy that un-premultiplies the canvas, mixes the pigment into the existing colour with the right weight, and writes
 // premultiplied colour and alpha, with p5's blend mode set to REPLACE. On an opaque canvas it reduces to the original.
 let PASS = 'all';
+if (location.search.includes('origshader')) window.EXP = { origShader: true };
 const ALPHA_KEY = 'vec3 bgColor=mix(vec3(1.0),source.rgb,source.a);outColor=vec4(spectral_mix(bgColor,pigment.rgb,mixIntensity),1.);';
 // The replacement main(): the same spectral (Kubelka-Munk) mix and the same pigment darkening as p5.brush's, with two
 // changes for speed in software GL: (1) it exits early where the mask is empty or the pigment covers the pixel
@@ -34,6 +35,11 @@ function alphaShader(on) {
     if (i < 0 || !f.includes(ALPHA_KEY)) throw new Error('p5.brush blend shader changed: re-check the replacement main() in layers.js');
     SHD.alpha = createShader(SHD.orig._vertSrc, f.slice(0, i) + MAIN(OUT_CAST));
     SHD.plate = createShader(SHD.orig._vertSrc, f.slice(0, i) + MAIN(OUT_PLATE));
+    // a new shader's first composite comes out in the wrong colour (its uniforms aren't live yet): warm each one up with
+    // a throwaway mark, then repaint what was under it
+    for (const sh of [SHD.plate, SHD.alpha]) { inst.shaderProgram = sh; boilSeed('warmup'); _paint([[1, 1], [6, 1], [6, 6], [1, 6]], { wash: '#808080', ink: null }); flushBrush(); _paint([[1, 1], [6, 1], [6, 6]], { wash: '#404040', ink: null }); flushBrush(); }
+    inst.shaderProgram = SHD.orig; flushBrush();
+    if (typeof PASS !== 'undefined' && PASS === 'cast') clear(); else image(paperG, 0, 0);
   }
   flushBrush();
   if (window.EXP && window.EXP.noAlpha) on = false;

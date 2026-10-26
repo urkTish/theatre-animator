@@ -290,7 +290,7 @@ function draw() {
   // ekkyklema: the cast pass paints the characters on a transparent canvas with an alpha-correct blend (src/layers.js)
   const castPass = typeof PASS !== 'undefined' && PASS === 'cast';
   // (the sample's plate covers the frame with opaque paint, so its paper never shows; the grain is multiplied after)
-  if (castPass) { clear(); alphaShader(true); } else { if (window.LOOP || typeof PASS === 'undefined' || PASS !== 'plate') image(paperG, 0, 0); else background(PAL.paper); if (typeof alphaShader !== 'undefined') alphaShader(false); }
+  if (castPass) { clear(); alphaShader(true); } else { if (window.LOOP || typeof PASS === 'undefined' || PASS !== 'plate') image(paperG, 0, 0); else background(PAL.paper); if (typeof alphaShader !== 'undefined' && !(window.LOOP && location.search.includes('noswap'))) alphaShader(false); }
   drawWorld(T);
   if (castPass) alphaShader(false);
   pop();

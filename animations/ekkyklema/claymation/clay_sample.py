@@ -175,7 +175,7 @@ def encode(o):
             ("matte", "matte", "matte_", None, 24)]
     for name, sub, prefix, vf, crf in jobs:
         pat = _twos_sequence(os.path.join(fr, sub), prefix, os.path.join(w, "seq_" + name))
-        filt = ["format=gray"] if name == "matte" else []
+        filt = ["scale=1280:720:flags=lanczos"] + (["format=gray"] if name == "matte" else [])
         if vf:
             filt.append(vf)
         filt.append("format=yuv420p")

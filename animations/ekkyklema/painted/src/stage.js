@@ -18,13 +18,13 @@ const GEO = {
   zFront0: -1.68, roll: 2.93,                        // the platform's front edge waits 1.68 m behind the facade, rolls 2.93 m
   couchL: 2.1, couchD: .8, couchH: .45, couchZ: -.78, // couch on the deck: its centre 0.78 m behind the deck's front edge
 };
-const TIMES = { knock: [2.12, 2.42], doors: [3.3, 5.4], roll: [5.5, 9.5], end: 15 };
+const TIMES = { knock: [2.11, 2.41], doors: [3.3, 5.4], roll: [5.5, 9.5], end: 15 };
 const smoother = u => { u = clamp(u); return u * u * u * (u * (u * 6 - 15) + 10); };   // quintic: slow in, slow out
 // the machinery as pure functions of t
 const doorAngle = t => {
   const [a, b] = TIMES.doors, k = smoother(seg(t, a, b));
   const unlatch = t > a - .12 && t < a + .2 ? .015 * Math.sin(seg(t, a - .12, a + .2) * Math.PI) : 0;           // the bar lifts: a small jolt first
-  const knock = TIMES.knock.reduce((s, tk) => s + .006 * spring(t, tk, 14, 60), 0);                               // the right leaf jolts at each knock
+  const knock = TIMES.knock.reduce((s, tk) => s + .022 * spring(t, tk, 12, 55), 0);                               // the right leaf jolts at each knock
   return { L: k * Math.PI / 2 + unlatch * .6, R: k * Math.PI / 2 + unlatch + knock };
 };
 const rollDist = t => GEO.roll * smoother(seg(t, ...TIMES.roll));

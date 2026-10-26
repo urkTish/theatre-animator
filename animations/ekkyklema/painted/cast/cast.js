@@ -21,17 +21,17 @@ const CAST = {
       look: 'dikaiopolis',
       motion: {
         space: 'world', steps: true, idle: { breath: 1, sway: .8, seed: .3 },
-        root: [[0, 1.95, .5], [2.8, 2.38, 1.02, .8], [7.4, 2.5, 1.14, .75], [9.95, 2.4, 1.08, .6]],
+        root: [[0, 1.6, .42], [2.75, 2.36, 1.02, .85], [7.4, 2.5, 1.14, .75], [9.95, 2.4, 1.08, .6]],
         keys: [
           [0, { heading: -.125, headHeading: -.125, lean: 0, hip: 0, crouch: 0, headTilt: 0, headDx: 0, headDy: 0,
                 r: { a: .12, e: .35, w: 0, h: 'relax', palm: false }, l: { a: .1, e: .3, w: 0, h: 'relax' } }],
           [.85, { headHeading: 0, headTilt: -.05 }, .25],                    // an impatient glance at the audience...
           [1.4, { headHeading: -.125, headTilt: .02, hip: .02 }, .3],        // ...and back to the door
-          [1.72, { lean: -.04, headHeading: -.25, r: { a: 1.2, e: 1.05, w: .1, h: 'fist' } }, .3, 'easeOut'],   // wind-up
-          [2.05, { lean: .05, r: { e: .42 } }, .07, 'easeIn'],               // knock
-          [2.14, { r: { e: .95 } }, .12, 'easeOut'],
-          [2.35, { r: { e: .42 } }, .07, 'easeIn'],                          // knock
-          [2.44, { r: { e: .95 }, lean: 0 }, .14, 'easeOut'],
+          [1.68, { lean: -.05, headHeading: -.25, r: { a: 1.25, e: 1.45, w: .25, h: 'fist' } }, .32, 'easeOut'],   // wind-up: fist back by the shoulder
+          [2.03, { lean: .06, r: { a: 1.4, e: .2, w: .1 } }, .08, 'easeIn'],  // knock
+          [2.13, { r: { a: 1.3, e: 1.2, w: .25 } }, .13, 'easeOut'],
+          [2.33, { r: { a: 1.4, e: .2, w: .1 } }, .08, 'easeIn'],             // knock
+          [2.43, { r: { a: 1.3, e: 1.1, w: .2 }, lean: 0 }, .14, 'easeOut'],
           [2.68, { r: { a: .3, e: .6, h: 'relax' }, lean: -.04, headHeading: -.125 }, .4],   // steps back to watch
           [3.25, { lean: 0, l: { a: .25, e: .5 } }, .5],
           [4.3, { lean: .07, headTilt: .08, headDy: -.01 }, .9],             // peers into the dark
