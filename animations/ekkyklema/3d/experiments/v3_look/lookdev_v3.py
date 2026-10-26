@@ -68,11 +68,12 @@ EXTRA_ASSETS = [
 
 def parse_args(argv):
     a = dict(src=SRC_DEFAULT, work=WORK_DEFAULT, out=HERE, shots="audience,establishing", res="1920x1080",
-             spp=64, save_blend=False, sun_study=False, volume=True, quick=False, lst="16.67", est_cam="")
+             spp=64, save_blend=False, sun_study=False, volume=True, quick=False, lst="16.67", est_cam="",
+             look="AgX - High Contrast", exp="")
     i = 0
     while i < len(argv):
         k = argv[i]
-        if k in ("--src", "--work", "--out", "--shots", "--res", "--lst", "--est-cam"):
+        if k in ("--src", "--work", "--out", "--shots", "--res", "--lst", "--est-cam", "--look", "--exp"):
             a[k[2:].replace("-", "_")] = argv[i + 1]
             i += 2
             continue
@@ -135,8 +136,10 @@ def driver(args):
     cmd = [BLENDER, "-b", copy, "--python-exit-code", "1", "-P", os.path.abspath(__file__), "--"]
     for k in ("work", "out", "shots", "res", "lst"):
         cmd += ["--" + k, str(args[k])]
-    if args["est_cam"]:
-        cmd += ["--est-cam", args["est_cam"]]
+    for k in ("est_cam", "exp"):
+        if args[k]:
+            cmd += ["--" + k.replace("_", "-"), args[k]]
+    cmd += ["--look", args["look"]]
     cmd += ["--spp", str(args["spp"])]
     for flag, key in (("--save-blend", "save_blend"), ("--sun-study", "sun_study"), ("--quick", "quick")):
         if args[key]:
@@ -2200,7 +2203,7 @@ if IN_BLENDER:
     # ------------------------------------------------------------- 4. compositor: haze, bloom, vignette
     _HDRI_PX = {}
 
-    def hdri_horizon(theta, half_width=0.6, el0=0.5, el1=5.0):
+    def hdri_horizon(theta, half_width=0.6, el0=1.5, el1=4.5):
         """mean sky radiance just above the horizon around scene direction angle theta (rad), as the world
         shader shows it: the colour that distant land should fade to (aerial perspective)"""
         import numpy as np
@@ -2240,7 +2243,7 @@ if IN_BLENDER:
         rl = nt.n("CompositorNodeRLayers")
         # aerial perspective from the mist pass (linear 40 m .. 9 km), toward a pale late-afternoon haze
         mul = nt.n("CompositorNodeMath", operation="MULTIPLY")
-        mul.inputs[1].default_value = 1.0
+        mul.inputs[1].default_value = 0.93
         nt.l(rl.outputs["Mist"], mul.inputs[0])
         pw = nt.n("CompositorNodeMath", operation="POWER")
         pw.inputs[1].default_value = 0.85
@@ -2257,13 +2260,16 @@ if IN_BLENDER:
         keep = nt.n("CompositorNodeSetAlpha", mode="REPLACE_ALPHA")
         nt.l(mix.outputs[0], keep.inputs["Image"])
         nt.l(rl.outputs["Alpha"], keep.inputs["Alpha"])
-        over = nt.n("CompositorNodeAlphaOver")
-        nt.l(rl.outputs["Env"], over.inputs[1])
-        nt.l(keep.outputs[0], over.inputs[2])
+        # the Env pass is already weighted by background coverage, so it is added, not alpha-overed
+        # (alpha-over multiplies it by (1 - alpha) a second time: a dark fringe along every skyline)
+        over = nt.n("CompositorNodeMixRGB", blend_type="ADD")
+        over.inputs[0].default_value = 1.0
+        nt.l(keep.outputs[0], over.inputs[1])
+        nt.l(rl.outputs["Env"], over.inputs[2])
         # subtle bloom on the sunlit highlights (scene-linear threshold, before the view transform)
         gl = nt.n("CompositorNodeGlare", glare_type="BLOOM", quality="HIGH")
-        gl.inputs["Threshold"].default_value = 1.6
-        gl.inputs["Strength"].default_value = 0.22
+        gl.inputs["Threshold"].default_value = 3.0
+        gl.inputs["Strength"].default_value = 0.18
         gl.inputs["Size"].default_value = 0.55
         gl.inputs["Saturation"].default_value = 1.0
         nt.l(over.outputs[0], gl.inputs["Image"])
@@ -2280,8 +2286,26 @@ if IN_BLENDER:
         vg = nt.n("CompositorNodeMixRGB", blend_type="MULTIPLY")
         nt.l(gl.outputs[0], vg.inputs[1])
         nt.l(mr.outputs[0], vg.inputs[2])
+        last = vg.outputs[0]
+        if shot == "audience":
+            # a soft graduated darkening of the near orchestra (as a photographer's grad would), so the eye
+            # goes to the sunlit facade and the tableau rather than the bright foreground floor
+            bx = nt.n("CompositorNodeBoxMask")
+            bx.inputs["Position"].default_value = (0.5, 0.0)
+            bx.inputs["Size"].default_value = (2.0, 0.62)
+            bb = nt.n("CompositorNodeBlur", filter_type="FAST_GAUSS", use_relative=True)
+            bb.factor_x = bb.factor_y = 0.25
+            nt.l(bx.outputs["Mask"], bb.inputs["Image"])
+            gm = nt.n("CompositorNodeMapRange")
+            gm.inputs["To Min"].default_value = 1.0
+            gm.inputs["To Max"].default_value = 0.80
+            nt.l(bb.outputs[0], gm.inputs["Value"])
+            gr = nt.n("CompositorNodeMixRGB", blend_type="MULTIPLY")
+            nt.l(last, gr.inputs[1])
+            nt.l(gm.outputs[0], gr.inputs[2])
+            last = gr.outputs[0]
         comp = nt.n("CompositorNodeComposite", use_alpha=False)
-        nt.l(vg.outputs[0], comp.inputs["Image"])
+        nt.l(last, comp.inputs["Image"])
 
     # ------------------------------------------------------------- 5. cameras
     def theatron_seat_z(x, y):
@@ -2468,7 +2492,7 @@ if IN_BLENDER:
         r.image_settings.color_depth = "8"
         vs = sc.view_settings
         vs.view_transform = "AgX"
-        vs.look = "AgX - Medium High Contrast"
+        vs.look = ARGS["look"]
 
     def verify_render(path):
         """after boilerplate.verify_render (skill): mean luminance, clipping, flatness"""
@@ -2494,8 +2518,8 @@ if IN_BLENDER:
         return res
 
     SHOTS = {
-        "audience": dict(frame=FRAME_AUDIENCE, cam="V3 audience eye", exposure=0.55, tag="v3_audience_eye"),
-        "establishing": dict(frame=FRAME_ESTABLISHING, cam="V3 establishing", exposure=0.25, tag="v3_establishing"),
+        "audience": dict(frame=FRAME_AUDIENCE, cam="V3 audience eye", exposure=0.40, tag="v3_audience_eye"),
+        "establishing": dict(frame=FRAME_ESTABLISHING, cam="V3 establishing", exposure=0.20, tag="v3_establishing"),
     }
 
     AIR = [None]
@@ -2510,6 +2534,8 @@ if IN_BLENDER:
         sc.frame_set(s["frame"])
         build_compositor(shot)
         sc.view_settings.exposure = s["exposure"]
+        if ARGS["exp"]:
+            sc.view_settings.exposure = float(ARGS["exp"].split(",")[0 if shot == "audience" else 1])
         render_settings(w, h, spp)
         path = os.path.join(outdir, s["tag"] + ".png")
         sc.render.filepath = path
