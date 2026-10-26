@@ -3,7 +3,8 @@
     blender -b claymation.blend -P clay_closeup.py -- OUT.png [FRAME=287] [SAMPLES=48]
 
 Uses the camera "CAM clay closeup (still)" at 1920x1080 and renders set and puppets together in
-one layer (the plate layer with the CAST collection switched back on).
+one layer (the plate layer with the CAST collection switched back on). The stagehands are left
+out: they are hidden from the audience's view, but this lower camera would see behind the couch.
 """
 import sys
 
@@ -21,7 +22,11 @@ for vl in sc.view_layers:
     vl.use = vl.name == "plate"
 plate = sc.view_layers["plate"]
 plate.samples = spp
-plate.layer_collection.children["CAST"].exclude = False
+cast_lc = plate.layer_collection.children["CAST"]
+cast_lc.exclude = False
+# the stagehands are hidden from the audience but this camera looks behind the couch: leave them out
+for slot in ("stagehand_1", "stagehand_2"):
+    cast_lc.children[slot].exclude = True
 nt = sc.node_tree
 for n in nt.nodes:
     if n.type == "OUTPUT_FILE":

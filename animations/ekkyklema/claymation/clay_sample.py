@@ -3,7 +3,8 @@
 
     python3 clay_sample.py all                 # everything below, in order
     python3 clay_sample.py prep|build|render|tracks|closeup|encode
-    options: --work DIR  --pct 100  --spp 32  --frames 1-288  --out DIR (default ./sample)
+    options: --work DIR  --pct 100  --spp 16  --frames 1-288  --out DIR (default ./sample)
+             render --cast-only 1   re-render only the cast layer (after a puppet swap)
 
 prep     copy the built 3D scene (never touching the original) and paint the backdrop
 build    blender: clay_build.py -> WORK/claymation.blend
@@ -99,7 +100,12 @@ def render(o):
     before = set(glob.glob(os.path.join(w, "frames", "_raw", "*.png")))
     t = time.time()
     # plate + cast where the plate changes; cast only in the locked holds
-    for (a, b), plate in [((1, 1), True), (PLATE_MOVING, True)] + [(r, False) for r, _ in PLATE_REUSE]:
+    jobs = [((1, 1), True), (PLATE_MOVING, True)] + [(r, False) for r, _ in PLATE_REUSE]
+    if o.get("cast-only"):     # e.g. after swapping a puppet: plates on disk are kept
+        jobs = [((f0, f1), False)]
+        for sub in ("_raw", "cast", "shadow", "matte", "matte_slots"):
+            shutil.rmtree(os.path.join(w, "frames", sub), ignore_errors=True)
+    for (a, b), plate in jobs:
         a, b = max(a, f0), min(b, f1)
         if a > b:
             continue

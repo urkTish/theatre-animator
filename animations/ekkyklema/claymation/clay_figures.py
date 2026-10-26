@@ -535,7 +535,20 @@ def build_all(o):
         bpy.data.objects.remove(him, do_unlink=True)
     blanket = acc("Reclining actor", "blanket")
     if blanket:
-        blanket.material_slots[0].material = mat_puppet_cloth("CLOTH blanket", blanket.material_slots[0].material)
+        if CLAY_ROBES:     # a sculpted clay coverlet with the painted v3 stripes, folds softened
+            src = blanket.material_slots[0].material
+            img = next((n.image for n in src.node_tree.nodes if n.type == "TEX_IMAGE" and n.image and
+                        not n.image.name.startswith("rough_linen")), None)
+            store_clay_co(blanket)
+            blanket.material_slots[0].material = mat_clay("CLAY blanket", cb.srgb(170, 70, 50), rough=0.6, sss=0.1,
+                                                          image=img, uv="pattern", prints=0.8, tool=1.3, seed=5.0)
+            sm = blanket.modifiers.new("sculpted folds", "SMOOTH")
+            sm.factor, sm.iterations = 0.7, 14
+            with ctx_override(blanket):
+                while blanket.modifiers.find(sm.name) > 0:
+                    bpy.ops.object.modifier_move_up(modifier=sm.name)
+        else:
+            blanket.material_slots[0].material = mat_puppet_cloth("CLOTH blanket", blanket.material_slots[0].material)
         figs["Reclining actor"]["static"] = [blanket]
 
     # ---- poses for the animation (computed in platform-local space, before parenting) ----------
