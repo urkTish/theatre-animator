@@ -97,14 +97,14 @@ def _blender_render(o, f0, f1, plate=True, tag=""):
 def render(o):
     w = o["work"]
     f0, f1 = (int(x) for x in o["frames"].split("-"))
-    before = set(glob.glob(os.path.join(w, "frames", "_raw", "*.png")))
-    t = time.time()
     # plate + cast where the plate changes; cast only in the locked holds
     jobs = [((1, 1), True), (PLATE_MOVING, True)] + [(r, False) for r, _ in PLATE_REUSE]
     if o.get("cast-only"):     # e.g. after swapping a puppet: plates on disk are kept
         jobs = [((f0, f1), False)]
         for sub in ("_raw", "cast", "shadow", "matte", "matte_slots"):
             shutil.rmtree(os.path.join(w, "frames", sub), ignore_errors=True)
+    before = set(glob.glob(os.path.join(w, "frames", "_raw", "*.png")))
+    t = time.time()
     for (a, b), plate in jobs:
         a, b = max(a, f0), min(b, f1)
         if a > b:
@@ -117,7 +117,7 @@ def render(o):
     new = set(glob.glob(os.path.join(w, "frames", "_raw", "*.png"))) - before
     rec = {"frames_rendered": len(new), "seconds": round(dt, 1),
            "seconds_per_rendered_frame": round(dt / max(1, len(new)), 1),
-           "settings": {"resolution_pct": int(o["pct"]), "spp": o.get("spp")}}
+           "settings": {"resolution_pct": int(o["pct"]), "spp": o.get("spp"), "cast_only": bool(o.get("cast-only"))}}
     path = os.path.join(w, "render_timing.json")
     hist = json.load(open(path)) if os.path.exists(path) else []
     hist.append(rec)

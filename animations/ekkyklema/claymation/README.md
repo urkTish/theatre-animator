@@ -93,7 +93,22 @@ whose Poser and base poses are imported, unchanged) and the v3 texture folder th
 
 ### Render time
 
-RENDER_TIME_TABLE
+Measured on this machine (4 CPU cores, no GPU, Cycles + OpenImageDenoise), while two other
+renders shared the cores, so expect less on a free machine. Settings: 960×540 (75 %), upscaled
+to 1280×720 with Lanczos at encode (the shallow focus hides the difference). Samples: plate 10,
+cast 8 (adaptive). Every 2nd frame rendered.
+
+| Pass | Frames | Time per rendered frame |
+|---|---|---|
+| plate + cast (camera/doors/platform moving, 1.5–8.4 s) | 85 | mean 43 s (26–91 s, depending on load) |
+| cast only (locked holds; plate reused) | 59 | about 15 s |
+| cast only, whole shot (after a puppet change) | 144 | 15 s |
+| comp scene (plate × shadow + cast) | 144 | under 1 s |
+| **whole first render** | 144 rendered = 288 output frames | **76 min: 31.6 s per rendered frame, 15.8 s per output frame** |
+| close-up still, 1920×1080, 48 samples | 1 | 3.4 min |
+| build (`clay_build.py`) | — | 40–150 s |
+
+`--pct 100` (native 720p) costs about 1.8× as much; `--spp 16` about 1.3×.
 
 ## Layers, and how to swap a character
 
@@ -142,7 +157,34 @@ the door frame and couch cut out of each puppet. Frames 2k and 2k−1 share a he
 
 ## Strengths and weaknesses
 
-STRENGTHS_WEAKNESSES
+Strengths
+- It reads as a hand-made tabletop set. Strip-wood boards slightly out of true, stained and
+  dry-brushed; craft wheels, felt and polymer-clay props; a sand ground with grit and
+  static-grass tufts; a painted cyc; leaf-cookie dapple; and shallow focus.
+- The puppets look like plasticine on purpose. Fingerprints and tool drags show in the close-up;
+  the folds are sculpted and the borders painted; the plaster masks are painted, and the hair is
+  sculpted clay. Their realistic bodies now read as sculpted puppets rather than CG people.
+- The motion is on twos with hand-made irregularity. The acting is clear despite the masks:
+  anticipation and overshoot on the actor's presenting gesture, and the reclining man answers.
+- All the reconstruction facts are kept, and the stagehands stay hidden from the audience camera.
+- The puppets are separable: plate, cast with a shadow pass and set occlusion, per-slot mattes and
+  tracks.json. A puppet change needs only a cast re-render, tested here (the clay blanket was
+  changed that way).
+
+Weaknesses
+- The puppets are small in the wide frames, so most of the clay detail only shows in the
+  close-up and in the final 3.6 s.
+- The masks' painted faces (from the v3 textures) are quite naturalistic. They read as
+  "painted doll" more than as stylised Aardman faces.
+- There is no himation. The v3 drape stood off the shoulder like a board, so it was left out.
+  There is a small gap in the standing actor's sleeve at the elbow (filled with robe-coloured
+  clay, so it is hard to spot).
+- The stagehands are glimpsed only as dark shapes under the couch, in the interior's shadow. The
+  close-up camera would see them, so the close-up leaves them out.
+- The wall is large and fairly uniform, and the cookie dapple is the only break in the light on
+  it. A real set would also show seams, pins or scuffs.
+- The render is at 75 % (upscaled). The matte includes the slivers of puppet that are genuinely
+  visible through the gaps round the closed door leaves.
 
 ## Credits and licences
 
